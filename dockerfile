@@ -1,5 +1,5 @@
 # base image
-FROM python:3.9.16
+FROM python:3.9-ubi8
 
 # set working directory
 WORKDIR /usr/src/app
