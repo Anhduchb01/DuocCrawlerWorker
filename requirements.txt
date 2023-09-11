@@ -1,0 +1,14 @@
+flask
+flask_cors
+apscheduler
+scrapy
+crochet
+pymongo
+python-dotenv
+scrapy_splash
+redis
+rq
+celery
+python-dateutil
+numpy
+tqdm

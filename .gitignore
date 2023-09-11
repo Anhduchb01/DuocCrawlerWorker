@@ -1,0 +1,9 @@
+.env
+env/**
+myenv/
+env
+downloads
+ai_model
+__pycache__
+**/__pycache__/**
+data

@@ -1,0 +1,64 @@
+version: '3.8'
+services:
+  web:
+    build: .
+    image: web
+    container_name: web
+    ports:
+      - 5000:5000
+    command: python app.py
+    environment:
+      - DB_URL=mongodb://admin:admin123@mongodb:27017/?authSource=Duoc
+      - DB_Name=Duoc
+      - APP_SETTINGS=config.DevelopmentConfig
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SPLASH_URL=http://splash:8050
+    depends_on:
+      - mongodb
+      - redis
+  worker:
+    build: .
+    # image: web
+    container_name: worker
+    command: celery -A app.celery worker --loglevel=info
+    volumes:
+      - .:/usr/src/app
+    environment:
+      - DB_URL=mongodb://admin:admin123@mongodb:27017/?authSource=Duoc
+      - DB_Name=Duoc
+      - APP_SETTINGS=config.DevelopmentConfig
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SPLASH_URL=http://splash:8050
+    depends_on:
+      - web
+      - redis
+
+  redis:
+    image: redis:6-alpine
+    container_name: redis
+  splash:
+    image : scrapinghub/splash:3.4.1
+    container_name: splash
+    ports:
+      - 8050:8050
+    volumes:
+      - .:/usr/src/app
+
+      
+  mongodb:
+    image: bitnami/mongodb:latest
+    container_name: mongodb
+    environment:
+      - MONGODB_ROOT_PASSWORD=root12345
+      - MONGODB_USERNAME=admin
+      - MONGODB_PASSWORD=admin123
+      - MONGODB_DATABASE=Duoc
+    ports:
+      - 27018:27017
+    volumes:
+      - ./data:/bitnami/mongodb
+
+    
+  
