@@ -31,20 +31,19 @@ DB_Name = os.environ.get('DB_Name')
 SPLASH_URL = os.environ.get('SPLASH_URL')
 client = MongoClient(DB_URL)
 crawler = Blueprint('crawler', __name__)
-import crochet
-crochet.setup()
+
 output_data = []
 # client = MongoClient("mongodb://crawl02:crawl02123@localhost:27017/?authSource=Duoc")
 db = client.Duoc
 crawlers_collection = db["crawlers"]
 config_crawlers_collection = db["configcrawlers"]
 config_default_crawlers_collection = db["configdefaultcrawlers"]
+log_crawlers_collection = db["logcrawlers"]
 from celery import Celery
 import os
 DB_URL = os.environ.get('DB_URL')
 DB_Name = os.environ.get('DB_Name')
-celery = Celery("myapp", broker=os.environ.get("CELERY_BROKER_URL"),backend=os.environ.get("CELERY_RESULT_BACKEND"))
-spider_counters = {}
+celery = Celery("app", broker=os.environ.get("CELERY_BROKER_URL"),backend=os.environ.get("CELERY_RESULT_BACKEND"))
 scheduler = BackgroundScheduler()
 scheduler.start()
 @crawler.route("/", methods=['GET', 'POST'])
@@ -85,14 +84,12 @@ def create_crawler():
 			content_query_split.pop()
 
 		obj_data_new["content_html_query"] = ' '.join(content_query_split)
-		# Create and save the ConfigCrawler object
 		config_crawler_obj = {
 			"titlePage": obj_data_new["titlePage"],
 			"modeSchedule": obj_data_new["modeSchedule"],
 			"namePage": address_page,
 			"urlPage": obj_data_new["urlPage"],
 			"timeSchedule": obj_data_new["timeSchedule"],
-			# "modeCookies": obj_data_new["modeCookies"],
 			"modeRobotsParser": obj_data_new["modeRobotsParser"],
 			"timeOutCrawl": obj_data_new["timeOutCrawl"],
 			"numberRetryCrawl": obj_data_new["numberRetryCrawl"],
@@ -114,8 +111,6 @@ def create_crawler():
 		}
 		config_crawler_obj_id = config_crawlers_collection.insert_one(config_crawler_obj)
 		print(f'Create ConfigCrawler OK : {config_crawler_obj["titlePage"]}')
-
-		# Create and save the ConfigDefaultCrawler object
 		config_default_crawler_obj = {
 			"titlePage": obj_data_new["titlePage"],
 			"article_url_query": obj_data_new["article_url_query"],
@@ -135,10 +130,7 @@ def create_crawler():
 
 		config_default_crawler_obj_id = config_default_crawlers_collection.insert_one(config_default_crawler_obj)
 		print(f'Create configDefaultCrawlerObj OK : {config_default_crawler_obj["titlePage"]}')
-
-		# Placeholder function call for demonstration
-		# schedule_crawler(obj_data_new)
-
+		save_logger_crawler(address_page,"Create","")
 		return "create success"
 
 	except Exception as err:
@@ -148,7 +140,6 @@ def create_crawler():
 def remove_crawler():
 	try:
 		name_page = request.json["namePage"]
-		# Assuming you've initialized collections for each type
 		config_default_crawlers_collection.delete_one({"titlePage": name_page})
 		crawlers_collection.delete_one({"addressPage": name_page})
 		config_crawlers_collection.delete_one({"namePage": name_page})
@@ -204,14 +195,11 @@ def save_edit_crawl():
 					"modeSchedule": obj_data_edit["modeSchedule"],
 					"timeSchedule": obj_data_edit["timeSchedule"],
 					"modePublic": obj_data_edit["modePublic"],
-					# "modeCookies": obj_data_edit["modeCookies"],
 					"modeRobotsParser": obj_data_edit["modeRobotsParser"],
 					"timeOutCrawl": obj_data_edit["timeOutCrawl"],
 					"numberRetryCrawl": obj_data_edit["numberRetryCrawl"],
 					"timeDelayCrawl": obj_data_edit["timeDelayCrawl"],
 					"userAgent": obj_data_edit["userAgent"],
-					# "cookies": obj_data_edit["cookies"],
-					# "httpHeader": obj_data_edit["httpHeader"],
 					"article_url_query": obj_data_edit["article_url_query"],
 					"title_query": obj_data_edit["title_query"],
 					"timeCreatePostOrigin_query": obj_data_edit["timeCreatePostOrigin_query"],
@@ -224,10 +212,6 @@ def save_edit_crawl():
 				}
 			}
 		)
-
-		# Placeholder function call for demonstration
-		# scheduleCrawler(obj_data_edit)
-		
 		return "success edit config"
 
 	except Exception as err:
@@ -301,33 +285,23 @@ def save_edit_crawl_create():
 def crawl():
 	data = request.get_json()
 	namePage = data['namePage']
-	task = crawl_new.delay(namePage)
-	return jsonify({"msg":"excute successfully crawler","namePage":namePage,"task_id": task.id}), 200
+	crawler_info = db.crawlers.find_one({'addressPage': namePage})
+	if crawler_info['statusPageCrawl'] == 'Pending':
+		return  jsonify({"msg":"Crawler is running","namePage":namePage}), 200
+	else:
+		task = crawl_new.delay(namePage)
+		return jsonify({"msg":"excute successfully crawler","namePage":namePage,"task_id": task.id}), 200
 @crawler.route("/tasks/<task_id>", methods=["GET"])
 def get_status(task_id):
-    task_result = AsyncResult(task_id)
-    result = {
-        "task_id": task_id,
-        "task_status": task_result.status,
-        "task_result": task_result.result
-    }
-    return jsonify(result), 200
-
-# @crochet.wait_for(timeout=3600.0)
-def scrape_with_crochet(spider,config_crawl,addressPage):
-	global spider_counters
-	global namePage
-	global type_crawler
+	task_result = AsyncResult(task_id)
+	result = {
+		"task_id": task_id,
+		"task_status": task_result.status,
+		"task_result": task_result.result
+	}
+	return jsonify(result), 200
+def run_spider_crawl(spider,config_crawl,addressPage):
 	print('config_crawl_crophet',config_crawl)
-	namePage = config_crawl['namePage']
-	type_crawler = config_crawl['type_crawler']
-	if addressPage not in spider_counters:
-		spider_counters[addressPage] = 0
-	# Get the counter for the spider name
-	# signal fires when single item is processed
-	# and calls _crawler_result to append that item
-	# dispatcher.connect(_crawler_result, signal=signals.item_scraped)
-	# dispatcher.connect(_crawler_closed, signal=signals.spider_closed)
 	setting = get_project_settings()
 	setting.update({
 		"ITEM_PIPELINES":{MongoPipeline: 400}
@@ -390,37 +364,6 @@ def scrape_with_crochet(spider,config_crawl,addressPage):
 	
 	return eventual  # returns a twisted.internet.defer.Deferred
 
-def _crawler_result(item, response, spider):
-	"""
-	We're using dict() to decode the items.
-	Ideally this should be done using a proper export pipeline.
-	"""
-	global spider_counters
-	spider_name = spider.name
-	# Increase the counter for the spider name
-	
-	title = dict(item).get('title')
-	url = dict(item).get('url')
-	check_exits = db.posts.find_one({'url': url})
-	try:
-		if len(title.split()) >= 3 :
-			if not check_exits:
-				db.posts.insert_one(dict(item))
-				spider_counters[spider_name] += 1
-				print('Item Count')
-				print(spider_counters[spider_name])
-				print(title)
-		else :
-			print('len of split title and connten < 3',title)
-			print('URL',url)
-	except:
-		print('not have title and content')
-
-		
-		# print(list(db.posts.find({})))
-	# output_data.append(dict(item))
-
-def _crawler_closed(spider):
 	"""
 	Update the increasePost attribute of db.crawlers with the total number of items crawled.
 	"""
@@ -460,7 +403,6 @@ def crawl_new(namePage):
 	userAgent = crawler_config["userAgent"]
 	modeRobotsParser = crawler_config["modeRobotsParser"]
 	useSplash = crawler_config["useSplash"]
-	# image_url_query = data.get("image_url_query")
 	print('type_crawler',type_crawler)
 	if type_crawler == 'origin':
 		config_crawl = {
@@ -481,7 +423,6 @@ def crawl_new(namePage):
 			'userAgent': userAgent,
 			'modeRobotsParser': modeRobotsParser,
 			'useSplash':useSplash
-			# "image_url_query":image_url_query,
 		}
 	else:
 		config_crawl = {
@@ -493,7 +434,6 @@ def crawl_new(namePage):
 			"summary_query": summary_query,
 			"content_html_query":content_html_query,
 			"summary_html_query":summary_html_query,
-			# "image_url_query":image_url_query,
 			"start_urls":crawler_config["start_urls"],
 			"correct_rules":crawler_config["correct_url_contain"],
 			"incorrect_rules":crawler_config["incorrect_url_contain"],
@@ -508,40 +448,30 @@ def crawl_new(namePage):
 			'useSplash':useSplash
 
 		}
-
+	
 	try:
 	# Run the crawl
 		if namePage == 'cafef':
-			scrape_with_crochet(CafefDuocSpider,config_crawl,'cafef')
-			# return f'Scraping started for cafef'
+			run_spider_crawl(CafefDuocSpider,config_crawl,'cafef')
 		elif namePage == 'cafebiz':
-			scrape_with_crochet(CafebizDuocSpider,config_crawl,'cafebiz')
-			# return f'Scraping started for cafebiz'
+			run_spider_crawl(CafebizDuocSpider,config_crawl,'cafebiz')
 		elif namePage == 'nguoiduatin':
-			scrape_with_crochet(NguoiDuaTinSpider,config_crawl,'nguoiduatin')
-			# return f'Scraping started for nguoiduatin'
+			run_spider_crawl(NguoiDuaTinSpider,config_crawl,'nguoiduatin')
 		elif namePage == 'thanhnien':
-			scrape_with_crochet(ThanhNienSpider,config_crawl,'thanhnien')
-			# return f'Scraping started for thanhnien'
+			run_spider_crawl(ThanhNienSpider,config_crawl,'thanhnien')
 		elif namePage == 'vnexpress':
-			scrape_with_crochet(VnexpressSpider,config_crawl,'vnexpress')
-			# return f'Scraping started for vnexpress'
+			run_spider_crawl(VnexpressSpider,config_crawl,'vnexpress')
 		elif namePage == 'vnpca':
-			scrape_with_crochet(VnpcaSpider,config_crawl,'vnpca')
-			# return f'Scraping started for vnpca'
+			run_spider_crawl(VnpcaSpider,config_crawl,'vnpca')
 		else:
 			if useSplash:
-				scrape_with_crochet(CustomSplashSpider,config_crawl,'customSplash')
-				# return 'Scraping Splash started for {}'.format(namePage)
+				run_spider_crawl(CustomSplashSpider,config_crawl,'customSplash')
 			else:
-				scrape_with_crochet(CustomSpider,config_crawl,'custom')
-				# return 'Scraping Scrapy started for {}'.format(namePage)
+				run_spider_crawl(CustomSpider,config_crawl,'custom')
 	except Exception as e:
 		msg = f"Error occurred during crawl: {str(traceback.format_exc())}"
-		msg = msg.replace("'","")
-		msg = msg.replace('"','')
-		print(msg)
 		db.crawlers.update_one({"addressPage": namePage},{"$set": {"statusPageCrawl": "Error"}})
+		save_logger_crawler(namePage,"Error",msg)
 		return str(msg)
 def configure_scheduler(namePage):
 	crawler_info = config_crawlers_collection.find_one({'namePage': namePage})
@@ -552,6 +482,24 @@ def configure_scheduler(namePage):
 			days_of_week = int(entry['day'])
 			scheduler.add_job(crawl_new, 'cron', id=f'{namePage}_{entry["day"]}_{hour}', args=[namePage], day_of_week=days_of_week, hour=hour)
 def remove_scheduler(namePage):
-    jobs_to_remove = [job for job in scheduler.get_jobs() if namePage in job.id]
-    for job in jobs_to_remove:
-        scheduler.remove_job(job.id)
+	jobs_to_remove = [job for job in scheduler.get_jobs() if namePage in job.id]
+	for job in jobs_to_remove:
+		scheduler.remove_job(job.id)
+
+def save_logger_crawler(page,action,message):
+	time_crawl_page = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+	string_message = ""
+	if action == "Create":
+		string_message = "Start Crawler Page :"
+	elif action == "Success":
+		string_message = "Crawler Success :"
+	elif action == "Error":
+		string_message = message.replace(r"['\"()]", '')
+
+	log_entry = {
+		'action': action,
+		'page': page,
+		'message': string_message,
+		'timelog': time_crawl_page
+	}
+	log_crawlers_collection.insert_one(log_entry)

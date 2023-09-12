@@ -18,10 +18,10 @@ services:
       - mongodb
       - redis
   worker:
-    build: .
-    # image: web
+    # build: .
+    image: worker
     container_name: worker
-    command: celery -A app.celery worker --loglevel=info
+    # command: celery -A app.celery worker --loglevel=info
     volumes:
       - .:/usr/src/app
     environment:

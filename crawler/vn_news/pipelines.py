@@ -9,7 +9,7 @@ from itemadapter import ItemAdapter
 import pymongo
 import logging
 
-
+from datetime import datetime
 class VnNewsPipeline:
 	def process_item(self, item, spider):
 		return item
@@ -56,5 +56,24 @@ class MongoPipeline(object):
 		print('self.mongo_db',self.mongo_db)
 		print(self.db.crawlers.find_one({'addressPage': spider.name}))
 		self.db.crawlers.update_one({'addressPage': spider.name}, {'$set': {'statusPageCrawl': 'success'}})
+		self.save_logger_crawler(spider.name,"Success","")
 		print('Update status success for crawler ',spider.name)
 		self.client.close()
+	def save_logger_crawler(self,page,action,message):
+		time_crawl_page = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+		string_message = ""
+
+		if action == "Create":
+			string_message = "Start Crawler Page :"
+		elif action == "Success":
+			string_message = "Crawler Success :"
+		elif action == "Error":
+			string_message = message.replace(r"['\"()]", '')
+
+		log_entry = {
+			'action': action,
+			'page': page,
+			'message': string_message,
+			'timelog': time_crawl_page
+		}
+		self.db.logcrawlers.insert_one(log_entry)

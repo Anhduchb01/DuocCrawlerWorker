@@ -1,8 +1,8 @@
 # base image
-FROM python:3.9.16
-
+FROM python:3.9.17-bullseye
+RUN mkdir /app
 # set working directory
-WORKDIR /usr/src/app
+WORKDIR /app
 RUN pip install --upgrade pip
 # add requirements (to leverage Docker cache)
 COPY ./requirements.txt .
@@ -12,5 +12,8 @@ RUN pip install -r requirements.txt
 
 # copy project
 COPY . .
-# CMD ["celery","-A","app.celery","worker","--loglevel=info"]
-CMD ["python","app.py"]
+USER root
+RUN chmod -R 777 /app/*
+CMD celery -A app.celery worker  --loglevel=info --pool=eventlet
+
+
