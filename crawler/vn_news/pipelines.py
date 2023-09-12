@@ -52,10 +52,9 @@ class MongoPipeline(object):
 
 	def close_spider(self, spider):
 		print('Finished crawling! ',spider.name)
-		print('self.mongo_uri',self.mongo_uri)
-		print('self.mongo_db',self.mongo_db)
 		print(self.db.crawlers.find_one({'addressPage': spider.name}))
-		self.db.crawlers.update_one({'addressPage': spider.name}, {'$set': {'statusPageCrawl': 'success'}})
+		time_crawl_page = datetime.now().strftime("%Y/%m/%d")
+		self.db.crawlers.update_one({'addressPage': spider.name}, {'$set': {'statusPageCrawl': 'success','dateLastCrawler':time_crawl_page}})
 		self.save_logger_crawler(spider.name,"Success","")
 		print('Update status success for crawler ',spider.name)
 		self.client.close()

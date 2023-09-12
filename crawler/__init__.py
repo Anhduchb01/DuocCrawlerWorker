@@ -31,7 +31,8 @@ DB_Name = os.environ.get('DB_Name')
 SPLASH_URL = os.environ.get('SPLASH_URL')
 client = MongoClient(DB_URL)
 crawler = Blueprint('crawler', __name__)
-
+import crochet
+crochet.setup()
 output_data = []
 # client = MongoClient("mongodb://crawl02:crawl02123@localhost:27017/?authSource=Duoc")
 db = client.Duoc
@@ -364,24 +365,6 @@ def run_spider_crawl(spider,config_crawl,addressPage):
 	
 	return eventual  # returns a twisted.internet.defer.Deferred
 
-	"""
-	Update the increasePost attribute of db.crawlers with the total number of items crawled.
-	"""
-	global spider_counters
-	spider_name = spider.name
-	print('finish crawl '+str(spider_name))
-	print('number of posts crawled'+str(spider_counters[spider_name]))
-	current_date = datetime.now().strftime("%Y/%m/%d")
-	if type_crawler == 'origin':
-		db.crawlers.update_one({"addressPage":spider_name}, {'$set': {'increasePost': str(spider_counters[spider_name])}})
-		post_count = db.posts.count_documents({"urlPageCrawl": spider_name})
-		db.crawlers.update_one({"addressPage": spider_name},{"$set": {"sumPost": post_count,"statusPageCrawl": "Success","dateLastCrawler": current_date}})
-
-	else:
-		db.crawlers.update_one({"addressPage":namePage}, {'$set': {'increasePost': str(spider_counters[spider_name])}})
-		post_count = db.posts.count_documents({"urlPageCrawl": namePage})
-		db.crawlers.update_one({"addressPage": namePage},{"$set": {"sumPost": post_count,"statusPageCrawl": "Success","dateLastCrawler": current_date}})
-	spider_counters[spider_name] = 0
 @celery.task(name='crawl_page')
 def crawl_new(namePage):
 	crawler_info = db.crawlers.find_one({'addressPage': namePage})
