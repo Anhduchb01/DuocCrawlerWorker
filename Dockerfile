@@ -15,6 +15,6 @@ COPY . .
 USER root
 RUN chmod -R 777 /app/*
 CMD celery -A app.celery worker  --loglevel=info --pool=eventlet
-
+# CMD ["python", "app.py"]
 
 
