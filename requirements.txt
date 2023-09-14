@@ -12,3 +12,4 @@ celery
 python-dateutil
 numpy
 tqdm
+eventlet
