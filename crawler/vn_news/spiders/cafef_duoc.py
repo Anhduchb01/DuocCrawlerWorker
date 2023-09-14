@@ -22,6 +22,7 @@ class CafefDuocSpider(scrapy.Spider):
 		print('CAFEF')
 		self.origin_domain = 'https://cafef.vn'
 		self.current_page = 1
+		self.namePage = 'cafef'
 
 	def parse(self, response):
 		print('START CRAWL CAFEF')

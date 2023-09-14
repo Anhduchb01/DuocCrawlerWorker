@@ -8,6 +8,7 @@ class VnpcaSpider(scrapy.Spider):
 
 	def __init__(self,config=None, *args, **kwargs):
 		super(VnpcaSpider, self).__init__(*args, **kwargs)
+		self.namePage = 'vnpca'
 		self.items_crawled = 0
 		self.last_date = config["last_date"]
 

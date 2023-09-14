@@ -8,6 +8,7 @@ class ThanhNienSpider(scrapy.Spider):
 
 	def __init__(self,config=None, *args, **kwargs):
 		super(ThanhNienSpider, self).__init__(*args, **kwargs)
+		self.namePage = 'thanhnien'
 		self.items_crawled = 0
 		self.last_date = config["last_date"]
 

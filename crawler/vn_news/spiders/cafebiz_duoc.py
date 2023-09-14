@@ -7,6 +7,7 @@ class CafebizDuocSpider(scrapy.Spider):
 	allowed_domains = ["cafebiz.vn"]
 	def __init__(self,config=None, *args, **kwargs):
 		super(CafebizDuocSpider, self).__init__(*args, **kwargs)
+		self.namePage = 'cafebiz'
 		self.items_crawled = 0
 		self.last_date = config["last_date"]
 

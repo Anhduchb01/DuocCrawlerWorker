@@ -8,6 +8,7 @@ class NguoiDuaTinSpider(scrapy.Spider):
 	allowed_domains = ['nguoiduatin.vn']
 	def __init__(self,config=None, *args, **kwargs):
 		super(NguoiDuaTinSpider, self).__init__(*args, **kwargs)
+		self.namePage = 'nguoiduatin'
 		self.items_crawled = 0
 		self.last_date = config["last_date"]
 
