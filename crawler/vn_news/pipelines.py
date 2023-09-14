@@ -54,7 +54,7 @@ class MongoPipeline(object):
 		print('Finished crawling! ',spider.namePage)
 		print(self.db.crawlers.find_one({'addressPage': spider.namePage}))
 		time_crawl_page = datetime.now().strftime("%Y/%m/%d")
-		self.db.crawlers.update_one({'addressPage': spider.namePage}, {'$set': {'statusPageCrawl': 'success','dateLastCrawler':time_crawl_page}})
+		self.db.crawlers.update_one({'addressPage': spider.namePage}, {'$set': {'statusPageCrawl': 'Success','dateLastCrawler':time_crawl_page}})
 		self.save_logger_crawler(spider.namePage,"Success","")
 		print('Update status success for crawler ',spider.namePage)
 		self.client.close()
