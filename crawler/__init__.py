@@ -39,6 +39,7 @@ db = client.Duoc
 crawlers_collection = db["crawlers"]
 config_crawlers_collection = db["configcrawlers"]
 config_default_crawlers_collection = db["configdefaultcrawlers"]
+posts_collection = db["posts"]
 log_crawlers_collection = db["logcrawlers"]
 from celery import Celery
 import os
@@ -50,6 +51,75 @@ scheduler.start()
 @crawler.route("/", methods=['GET', 'POST'])
 def main():
 		return '<h1>API PYTHON CRWALER</h1>'
+
+@crawler.route('/upload_crawlers', methods=['POST'])
+def upload_crawlers():
+    try:
+        if 'config' not in request.files or 'crawler' not in request.files or 'configdefault' not in request.files:
+            return jsonify({"error": "No file part"}), 400
+
+        fileconfig = request.files['config']
+        fileconfigdefault = request.files['configdefault']
+        filecrawler = request.files['crawler']
+        if fileconfig.filename == '' or filecrawler.filename == '' or fileconfigdefault.filename == '':
+            return jsonify({"error": "No selected file"}), 400
+
+        if fileconfig and filecrawler and fileconfigdefault:
+            fileconfig_content = fileconfig.read().decode('utf-8')
+            filecrawler_content = filecrawler.read().decode('utf-8')
+            fileconfigdefault_content = fileconfigdefault.read().decode('utf-8')
+            configcrawler = json.loads(fileconfig_content)
+            crawler = json.loads(filecrawler_content)
+            configcrawlerdefault = json.loads(fileconfigdefault_content)
+            if isinstance(configcrawler, list) and isinstance(crawler, list) and isinstance(configcrawlerdefault, list):
+                result = insertCrawler(crawler,configcrawler,configcrawlerdefault)
+                return jsonify({"message": "Crawlers inserted successfully"}), 200
+            else:
+                return jsonify({"error": "Invalid JSON data in the file"}), 400
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@crawler.route('/upload_posts', methods=['POST'])
+def upload_posts():
+    try:
+        if 'posts' not in request.files :
+            return jsonify({"error": "No file part"}), 400
+        fileposts = request.files['posts']
+        if fileposts.filename == '' :
+            return jsonify({"error": "No selected file"}), 400
+        if fileposts :
+            fileposts_content = fileposts.read().decode('utf-8')
+            posts = json.loads(fileposts_content)
+            if isinstance(posts, list) :
+                result = insertPost(posts)
+                return jsonify({"message": "Posts inserted successfully"}), 200
+            else:
+                return jsonify({"error": "Invalid JSON data in the file"}), 400
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+def insertCrawler(crawler,configcrawler,configcrawlerdefault):
+    for crawlerObj in crawler:
+        if '_id' in crawlerObj:
+            del crawlerObj['_id']
+    for configCrawlerObj in configcrawler:
+        if '_id' in configCrawlerObj:
+            del configCrawlerObj['_id']
+    for configCrawlerDefaultObj in configcrawlerdefault:
+        if '_id' in configCrawlerDefaultObj:
+            del configCrawlerDefaultObj['_id']
+    crawlers_collection.insert_many(crawler)
+    config_crawlers_collection.insert_many(configcrawlerdefault)
+    config_default_crawlers_collection.insert_many(configcrawler)
+    return {"data": "finish"}
+def insertPost(post):
+    print(len(post))
+    for postObj in post:
+        if '_id' in postObj:
+            del postObj['_id']
+    posts_collection.insert_many(post)
+    return {"data": "finish"}
 @crawler.route("/create-crawler", methods=["POST"])
 def create_crawler():
 	try:
