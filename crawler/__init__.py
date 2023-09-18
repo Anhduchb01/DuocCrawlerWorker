@@ -35,7 +35,7 @@ import crochet
 crochet.setup()
 output_data = []
 # client = MongoClient("mongodb://crawl02:crawl02123@localhost:27017/?authSource=Duoc")
-db = client.Duoc
+db = client[DB_Name]
 crawlers_collection = db["crawlers"]
 config_crawlers_collection = db["configcrawlers"]
 config_default_crawlers_collection = db["configdefaultcrawlers"]
@@ -43,8 +43,7 @@ posts_collection = db["posts"]
 log_crawlers_collection = db["logcrawlers"]
 from celery import Celery
 import os
-DB_URL = os.environ.get('DB_URL')
-DB_Name = os.environ.get('DB_Name')
+
 celery = Celery("app", broker=os.environ.get("CELERY_BROKER_URL"),backend=os.environ.get("CELERY_RESULT_BACKEND"))
 scheduler = BackgroundScheduler()
 scheduler.start()
