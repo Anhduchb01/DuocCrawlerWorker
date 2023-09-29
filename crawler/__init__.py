@@ -35,6 +35,7 @@ import crochet
 crochet.setup()
 output_data = []
 # client = MongoClient("mongodb://crawl02:crawl02123@localhost:27017/?authSource=Duoc")
+print('DB_Name',DB_Name)
 db = client[DB_Name]
 crawlers_collection = db["crawlers"]
 config_crawlers_collection = db["configcrawlers"]
@@ -137,7 +138,7 @@ def create_crawler():
 			"statusPageCrawl": "Off",
 			"modePage": "On",
 			"increasePost": '0',
-			"type": "create"
+			"type": "create",
 		}
 		crawler_obj = crawlers_collection.insert_one(crawler)
 		print(f'Create crawler Ok : {crawler_obj.inserted_id}')
@@ -177,7 +178,9 @@ def create_crawler():
 			"correct_url_contain": obj_data_new["correct_url_contain"],
 			"incorrect_url_contain": obj_data_new["incorrect_url_contain"],
 			"type": "create",
-			"useSplash" : obj_data_new["useSplash"]
+			"useSplash" : obj_data_new["useSplash"],
+			"saveToCollection":obj_data_new["saveToCollection"]
+
 		}
 		config_crawler_obj_id = config_crawlers_collection.insert_one(config_crawler_obj)
 		print(f'Create ConfigCrawler OK : {config_crawler_obj["titlePage"]}')
@@ -195,7 +198,8 @@ def create_crawler():
 			"correct_url_contain": obj_data_new["correct_url_contain"],
 			"incorrect_url_contain": obj_data_new["incorrect_url_contain"],
 			"type": "create",
-			"useSplash" : obj_data_new["useSplash"]
+			"useSplash" : obj_data_new["useSplash"],
+			"saveToCollection":obj_data_new["saveToCollection"]
 		}
 
 		config_default_crawler_obj_id = config_default_crawlers_collection.insert_one(config_default_crawler_obj)
@@ -278,6 +282,7 @@ def save_edit_crawl():
 					"summary_query": obj_data_edit["summary_query"],
 					"content_html_query": obj_data_edit["content_html_query"],
 					"summary_html_query": obj_data_edit["summary_query_html"],
+					"saveToCollection":obj_data_edit["saveToCollection"],
 					
 				}
 			}
@@ -335,6 +340,7 @@ def save_edit_crawl_create():
 					"correct_url_contain": obj_data_edit["correct_url_contain"],
 					"incorrect_url_contain": obj_data_edit["incorrect_url_contain"],
 					"useSplash": obj_data_edit["useSplash"],
+					"saveToCollection":obj_data_edit["saveToCollection"]
 				}
 			}
 		)
@@ -359,6 +365,7 @@ def crawl():
 	if crawler_info['statusPageCrawl'] == 'Pending':
 		return  jsonify({"msg":"Crawler is running","namePage":namePage}), 200
 	else:
+		db.crawlers.update_one({"addressPage": namePage},{"$set": {"statusPageCrawl": "Pending"}})
 		task = crawl_new.delay(namePage)
 		return jsonify({"msg":"excute successfully crawler","namePage":namePage,"task_id": task.id}), 200
 @crawler.route("/tasks/<task_id>", methods=["GET"])
@@ -438,7 +445,7 @@ def run_spider_crawl(spider,config_crawl,addressPage):
 def crawl_new(namePage):
 	crawler_info = db.crawlers.find_one({'addressPage': namePage})
 	crawler_config = db.configcrawlers.find_one({'namePage': namePage})
-	db.crawlers.update_one({"addressPage": namePage},{"$set": {"statusPageCrawl": "Pending"}})
+	
 	type_crawler = crawler_config["type"]
 	last_date = crawler_info["dateLastCrawler"]
 	title_query = crawler_config["title_query"]
@@ -455,6 +462,7 @@ def crawl_new(namePage):
 	userAgent = crawler_config["userAgent"]
 	modeRobotsParser = crawler_config["modeRobotsParser"]
 	useSplash = crawler_config["useSplash"]
+	saveToCollection = crawler_config["saveToCollection"]
 	print('type_crawler',type_crawler)
 	if type_crawler == 'origin':
 		config_crawl = {
@@ -474,7 +482,8 @@ def crawl_new(namePage):
 			'numberRetryCrawl': numberRetryCrawl,
 			'userAgent': userAgent,
 			'modeRobotsParser': modeRobotsParser,
-			'useSplash':useSplash
+			'useSplash':useSplash,
+			'saveToCollection':saveToCollection
 		}
 	else:
 		config_crawl = {
@@ -497,7 +506,8 @@ def crawl_new(namePage):
 			'numberRetryCrawl': numberRetryCrawl,
 			'userAgent': userAgent,
 			'modeRobotsParser': modeRobotsParser,
-			'useSplash':useSplash
+			'useSplash':useSplash,
+			'saveToCollection':saveToCollection
 
 		}
 	

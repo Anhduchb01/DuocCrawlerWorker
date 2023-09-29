@@ -29,6 +29,7 @@ class CustomSplashSpider(scrapy.Spider):
 		self.incorrect_rules = config['incorrect_rules']
 		self.namePage = config['namePage']
 		self.useSplash = config['useSplash']
+		self.saveToCollection = config['saveToCollection']
 		
 	def formatString(self, text):
 		if isinstance(text, list):  # Check if text is a list

@@ -24,7 +24,7 @@ class VnpcaSpider(scrapy.Spider):
 		self.origin_domain = 'https://vnpca.org.vn'
 		self.start_urls = ['https://vnpca.org.vn/tin-tuc-su-kien', ]
 		self.current_page = 0
-
+		self.saveToCollection = config['saveToCollection']
 
 	def parse(self, response):
 		# Extract news article URLs from the page

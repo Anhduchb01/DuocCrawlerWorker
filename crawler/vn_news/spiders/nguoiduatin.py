@@ -24,6 +24,7 @@ class NguoiDuaTinSpider(scrapy.Spider):
 		self.origin_domain = 'https://www.nguoiduatin.vn'
 		self.start_urls = ['https://www.nguoiduatin.vn/tag-ajax/34687/layout/desktop/page/1']
 		self.current_page = 1
+		self.saveToCollection = config['saveToCollection']
 	def parse(self, response):
 		data = response.json().get('html', '')
 		if data:

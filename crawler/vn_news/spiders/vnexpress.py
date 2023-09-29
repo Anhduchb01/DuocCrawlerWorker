@@ -24,6 +24,7 @@ class VnexpressSpider(scrapy.Spider):
 		self.origin_domain = 'https://vnexpress.net/'
 		self.start_urls = ['https://vnexpress.net/tag/duoc-pham-756653','https://vnexpress.net/tag/nha-thuoc-100130']
 		self.current_page = 1
+		self.saveToCollection = config['saveToCollection']
 	def parse(self, response):
 		# Extract news article URLs from the page
 		article_links = response.css(self.article_url_query+'::attr(href)').getall()

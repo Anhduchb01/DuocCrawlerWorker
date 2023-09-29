@@ -24,7 +24,7 @@ class ThanhNienSpider(scrapy.Spider):
 		self.origin_domain = 'https://thanhnien.vn'
 		self.start_urls = ['https://thanhnien.vn/timelinetag/duoc-pham/1.htm','https://thanhnien.vn/timelinetag/duoc/1.htm','https://thanhnien.vn/timelinetag/thuoc/1.htm','https://thanhnien.vn/timelinetag/nha-thuoc/1.htm']
 		self.current_page = 1
-
+		self.saveToCollection = config['saveToCollection']
 	def parse(self, response):
 		# Extract news article URLs from the page
 		article_links = response.css(self.article_url_query+'::attr(href)').getall()

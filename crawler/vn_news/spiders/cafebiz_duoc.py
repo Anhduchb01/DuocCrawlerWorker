@@ -25,6 +25,7 @@ class CafebizDuocSpider(scrapy.Spider):
 		'https://cafebiz.vn/timelinetag/duoc-pham/1.htm', 'https://cafebiz.vn/timelinetag/duoc/1.htm','https://cafebiz.vn/timelinetag/thuoc/1.htm','https://cafebiz.vn/timelinetag/nha-thuoc/1.htm'
 	]
 		self.current_page = 1
+		self.saveToCollection = config['saveToCollection']
 	def parse(self, response):
 		print('START CRAWL CAFEBIZ')
 		# Extract news article URLs from the page

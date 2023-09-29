@@ -33,15 +33,17 @@ class MongoPipeline(object):
 
 	def process_item(self, item, spider):
 		name = item.__class__.__name__
+		saveToCollection = spider.saveToCollection
 		title = dict(item).get('title')
 		url = dict(item).get('url')
-		print('title',title)
-		check_exits = self.db.posts.find_one({'url': url})
+		check_exits = self.db[saveToCollection].find_one({'url': url})
 		try:
 			if len(title.split()) >= 3 :
 				if not check_exits:
 					print('Add new item to MongoDB',title)
-					self.db.posts.insert_one(dict(item))	
+					self.db[saveToCollection].insert_one(dict(item))	
+					curren_crawler = self.db.crawlers.find_one({'addressPage': spider.namePage})
+					self.db.crawlers.update_one({'addressPage': spider.namePage}, {'$set': {'increasePost': int(curren_crawler['increasePost'])+1}})
 			else :
 				print('len of split title and connten < 3',title)
 				print('URL',url)
@@ -52,9 +54,9 @@ class MongoPipeline(object):
 
 	def close_spider(self, spider):
 		print('Finished crawling! ',spider.namePage)
-		print(self.db.crawlers.find_one({'addressPage': spider.namePage}))
+		curren_crawler = self.db.crawlers.find_one({'addressPage': spider.namePage})
 		time_crawl_page = datetime.now().strftime("%Y/%m/%d")
-		self.db.crawlers.update_one({'addressPage': spider.namePage}, {'$set': {'statusPageCrawl': 'Success','dateLastCrawler':time_crawl_page}})
+		self.db.crawlers.update_one({'addressPage': spider.namePage}, {'$set': {'statusPageCrawl': 'Success','dateLastCrawler':time_crawl_page,'sumPost':int(curren_crawler['sumPost'])+int(curren_crawler['increasePost'])}})
 		self.save_logger_crawler(spider.namePage,"Success","")
 		print('Update status success for crawler ',spider.namePage)
 		self.client.close()
