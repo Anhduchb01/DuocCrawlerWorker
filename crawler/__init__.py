@@ -35,7 +35,7 @@ import crochet
 crochet.setup()
 output_data = []
 # client = MongoClient("mongodb://crawl02:crawl02123@localhost:27017/?authSource=Duoc")
-print('DB_Name',DB_Name)
+
 db = client[DB_Name]
 crawlers_collection = db["crawlers"]
 config_crawlers_collection = db["configcrawlers"]
@@ -46,80 +46,79 @@ from celery import Celery
 import os
 
 celery = Celery("app", broker=os.environ.get("CELERY_BROKER_URL"),backend=os.environ.get("CELERY_RESULT_BACKEND"))
-scheduler = BackgroundScheduler()
-scheduler.start()
+print('DB_Name',DB_Name)
 @crawler.route("/", methods=['GET', 'POST'])
 def main():
 		return '<h1>API PYTHON CRWALER</h1>'
 
 @crawler.route('/upload_crawlers', methods=['POST'])
 def upload_crawlers():
-    try:
-        if 'config' not in request.files or 'crawler' not in request.files or 'configdefault' not in request.files:
-            return jsonify({"error": "No file part"}), 400
+	try:
+		if 'config' not in request.files or 'crawler' not in request.files or 'configdefault' not in request.files:
+			return jsonify({"error": "No file part"}), 400
 
-        fileconfig = request.files['config']
-        fileconfigdefault = request.files['configdefault']
-        filecrawler = request.files['crawler']
-        if fileconfig.filename == '' or filecrawler.filename == '' or fileconfigdefault.filename == '':
-            return jsonify({"error": "No selected file"}), 400
+		fileconfig = request.files['config']
+		fileconfigdefault = request.files['configdefault']
+		filecrawler = request.files['crawler']
+		if fileconfig.filename == '' or filecrawler.filename == '' or fileconfigdefault.filename == '':
+			return jsonify({"error": "No selected file"}), 400
 
-        if fileconfig and filecrawler and fileconfigdefault:
-            fileconfig_content = fileconfig.read().decode('utf-8')
-            filecrawler_content = filecrawler.read().decode('utf-8')
-            fileconfigdefault_content = fileconfigdefault.read().decode('utf-8')
-            configcrawler = json.loads(fileconfig_content)
-            crawler = json.loads(filecrawler_content)
-            configcrawlerdefault = json.loads(fileconfigdefault_content)
-            if isinstance(configcrawler, list) and isinstance(crawler, list) and isinstance(configcrawlerdefault, list):
-                result = insertCrawler(crawler,configcrawler,configcrawlerdefault)
-                return jsonify({"message": "Crawlers inserted successfully"}), 200
-            else:
-                return jsonify({"error": "Invalid JSON data in the file"}), 400
+		if fileconfig and filecrawler and fileconfigdefault:
+			fileconfig_content = fileconfig.read().decode('utf-8')
+			filecrawler_content = filecrawler.read().decode('utf-8')
+			fileconfigdefault_content = fileconfigdefault.read().decode('utf-8')
+			configcrawler = json.loads(fileconfig_content)
+			crawler = json.loads(filecrawler_content)
+			configcrawlerdefault = json.loads(fileconfigdefault_content)
+			if isinstance(configcrawler, list) and isinstance(crawler, list) and isinstance(configcrawlerdefault, list):
+				result = insertCrawler(crawler,configcrawler,configcrawlerdefault)
+				return jsonify({"message": "Crawlers inserted successfully"}), 200
+			else:
+				return jsonify({"error": "Invalid JSON data in the file"}), 400
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+	except Exception as e:
+		return jsonify({"error": str(e)}), 500
 
 @crawler.route('/upload_posts', methods=['POST'])
 def upload_posts():
-    try:
-        if 'posts' not in request.files :
-            return jsonify({"error": "No file part"}), 400
-        fileposts = request.files['posts']
-        if fileposts.filename == '' :
-            return jsonify({"error": "No selected file"}), 400
-        if fileposts :
-            fileposts_content = fileposts.read().decode('utf-8')
-            posts = json.loads(fileposts_content)
-            if isinstance(posts, list) :
-                result = insertPost(posts)
-                return jsonify({"message": "Posts inserted successfully"}), 200
-            else:
-                return jsonify({"error": "Invalid JSON data in the file"}), 400
+	try:
+		if 'posts' not in request.files :
+			return jsonify({"error": "No file part"}), 400
+		fileposts = request.files['posts']
+		if fileposts.filename == '' :
+			return jsonify({"error": "No selected file"}), 400
+		if fileposts :
+			fileposts_content = fileposts.read().decode('utf-8')
+			posts = json.loads(fileposts_content)
+			if isinstance(posts, list) :
+				result = insertPost(posts)
+				return jsonify({"message": "Posts inserted successfully"}), 200
+			else:
+				return jsonify({"error": "Invalid JSON data in the file"}), 400
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+	except Exception as e:
+		return jsonify({"error": str(e)}), 500
 def insertCrawler(crawler,configcrawler,configcrawlerdefault):
-    for crawlerObj in crawler:
-        if '_id' in crawlerObj:
-            del crawlerObj['_id']
-    for configCrawlerObj in configcrawler:
-        if '_id' in configCrawlerObj:
-            del configCrawlerObj['_id']
-    for configCrawlerDefaultObj in configcrawlerdefault:
-        if '_id' in configCrawlerDefaultObj:
-            del configCrawlerDefaultObj['_id']
-    crawlers_collection.insert_many(crawler)
-    config_crawlers_collection.insert_many(configcrawlerdefault)
-    config_default_crawlers_collection.insert_many(configcrawler)
-    return {"data": "finish"}
+	for crawlerObj in crawler:
+		if '_id' in crawlerObj:
+			del crawlerObj['_id']
+	for configCrawlerObj in configcrawler:
+		if '_id' in configCrawlerObj:
+			del configCrawlerObj['_id']
+	for configCrawlerDefaultObj in configcrawlerdefault:
+		if '_id' in configCrawlerDefaultObj:
+			del configCrawlerDefaultObj['_id']
+	crawlers_collection.insert_many(crawler)
+	config_crawlers_collection.insert_many(configcrawlerdefault)
+	config_default_crawlers_collection.insert_many(configcrawler)
+	return {"data": "finish"}
 def insertPost(post):
-    print(len(post))
-    for postObj in post:
-        if '_id' in postObj:
-            del postObj['_id']
-    posts_collection.insert_many(post)
-    return {"data": "finish"}
+	print(len(post))
+	for postObj in post:
+		if '_id' in postObj:
+			del postObj['_id']
+	posts_collection.insert_many(post)
+	return {"data": "finish"}
 @crawler.route("/create-crawler", methods=["POST"])
 def create_crawler():
 	try:
@@ -139,6 +138,7 @@ def create_crawler():
 			"modePage": "On",
 			"increasePost": '0',
 			"type": "create",
+			"industry": obj_data_new["industry"]
 		}
 		crawler_obj = crawlers_collection.insert_one(crawler)
 		print(f'Create crawler Ok : {crawler_obj.inserted_id}')
@@ -179,7 +179,8 @@ def create_crawler():
 			"incorrect_url_contain": obj_data_new["incorrect_url_contain"],
 			"type": "create",
 			"useSplash" : obj_data_new["useSplash"],
-			"saveToCollection":obj_data_new["saveToCollection"]
+			"saveToCollection":obj_data_new["saveToCollection"],
+			"industry":obj_data_new["industry"]
 
 		}
 		config_crawler_obj_id = config_crawlers_collection.insert_one(config_crawler_obj)
@@ -199,7 +200,8 @@ def create_crawler():
 			"incorrect_url_contain": obj_data_new["incorrect_url_contain"],
 			"type": "create",
 			"useSplash" : obj_data_new["useSplash"],
-			"saveToCollection":obj_data_new["saveToCollection"]
+			"saveToCollection":obj_data_new["saveToCollection"],
+			"industry":obj_data_new["industry"]
 		}
 
 		config_default_crawler_obj_id = config_default_crawlers_collection.insert_one(config_default_crawler_obj)
@@ -225,7 +227,8 @@ def remove_crawler():
 @crawler.route("/crawler-get-information", methods=["GET"])
 def get_crawler_information():
 	try:
-		crawler_data = list(crawlers_collection.find({}))
+		industry = request.args.get('industry') 
+		crawler_data = list(crawlers_collection.find({'industry':industry}))
 		return dumps(crawler_data)
 
 	except Exception as err:
@@ -234,7 +237,8 @@ def get_crawler_information():
 @crawler.route("/get-data-edit-crawl", methods=["GET"])
 def get_data_edit_crawl():
 	try:
-		config_crawler_data = list(config_crawlers_collection.find({}))
+		industry = request.args.get('industry') 
+		config_crawler_data = list(config_crawlers_collection.find({'industry':industry}))
 		return dumps(config_crawler_data)
 
 	except Exception as err:
@@ -263,7 +267,7 @@ def save_edit_crawl():
 		obj_data_edit["content_html_query"] = ' '.join(content_query_split)
 
 		config_crawlers_collection.update_one(
-			{"titlePage": obj_data_edit["titlePage"]},
+			{"titlePage": obj_data_edit["titlePage"],'industry':obj_data_edit["industry"]},
 			{
 				"$set": {
 					"modeSchedule": obj_data_edit["modeSchedule"],
@@ -283,10 +287,18 @@ def save_edit_crawl():
 					"content_html_query": obj_data_edit["content_html_query"],
 					"summary_html_query": obj_data_edit["summary_query_html"],
 					"saveToCollection":obj_data_edit["saveToCollection"],
+					"start_urls": obj_data_edit["start_urls"],
 					
 				}
 			}
 		)
+		if obj_data_edit["modeSchedule"] :
+			print("true")
+			print('Setup Schedule {}'.format(obj_data_edit["titlePage"]))
+			configure_scheduler(obj_data_edit["titlePage"],obj_data_edit["industry"])
+		else :
+			print('Remove Scheduler {}'.format(obj_data_edit["titlePage"]))
+			remove_scheduler(obj_data_edit["titlePage"])
 		return "success edit config"
 
 	except Exception as err:
@@ -315,7 +327,7 @@ def save_edit_crawl_create():
 		obj_data_edit["content_html_query"] = ' '.join(content_query_split)
 		print('obj_data_edit',obj_data_edit)
 		config_crawlers_collection.update_one(
-			{"titlePage": obj_data_edit["titlePage"]},
+			{"titlePage": obj_data_edit["titlePage"],'industry':obj_data_edit["industry"]},
 			{
 				"$set": {
 					"modeSchedule": obj_data_edit["modeSchedule"],
@@ -340,13 +352,15 @@ def save_edit_crawl_create():
 					"correct_url_contain": obj_data_edit["correct_url_contain"],
 					"incorrect_url_contain": obj_data_edit["incorrect_url_contain"],
 					"useSplash": obj_data_edit["useSplash"],
-					"saveToCollection":obj_data_edit["saveToCollection"]
+					"saveToCollection":obj_data_edit["saveToCollection"],
 				}
 			}
 		)
+		print('obj_data_edit["modeSchedule"]',obj_data_edit["modeSchedule"])
 		if obj_data_edit["modeSchedule"] :
+			print("true")
 			print('Setup Schedule {}'.format(obj_data_edit["titlePage"]))
-			configure_scheduler(obj_data_edit["titlePage"])
+			configure_scheduler(obj_data_edit["titlePage"],obj_data_edit["industry"])
 		else :
 			print('Remove Scheduler {}'.format(obj_data_edit["titlePage"]))
 			remove_scheduler(obj_data_edit["titlePage"])
@@ -361,13 +375,14 @@ def save_edit_crawl_create():
 def crawl():
 	data = request.get_json()
 	namePage = data['namePage']
-	crawler_info = db.crawlers.find_one({'addressPage': namePage})
+	industry = data['industry']
+	crawler_info = db.crawlers.find_one({'addressPage': namePage,'industry':industry})
 	if crawler_info['statusPageCrawl'] == 'Pending':
-		return  jsonify({"msg":"Crawler is running","namePage":namePage}), 200
+		return  jsonify({"msg":"Crawler is running","namePage":namePage,"industry":industry}), 200
 	else:
 		db.crawlers.update_one({"addressPage": namePage},{"$set": {"statusPageCrawl": "Pending"}})
-		task = crawl_new.delay(namePage)
-		return jsonify({"msg":"excute successfully crawler","namePage":namePage,"task_id": task.id}), 200
+		task = crawl_new.delay(namePage,industry)
+		return jsonify({"msg":"excute successfully crawler","namePage":namePage,"industry":industry,"task_id": task.id}), 200
 @crawler.route("/tasks/<task_id>", methods=["GET"])
 def get_status(task_id):
 	task_result = AsyncResult(task_id)
@@ -441,8 +456,8 @@ def run_spider_crawl(spider,config_crawl,addressPage):
 	
 	return eventual 
 
-@celery.task(name='crawl_page')
-def crawl_new(namePage):
+@celery.task(name='crawl_new')
+def crawl_new(namePage,industry):
 	crawler_info = db.crawlers.find_one({'addressPage': namePage})
 	crawler_config = db.configcrawlers.find_one({'namePage': namePage})
 	
@@ -463,6 +478,8 @@ def crawl_new(namePage):
 	modeRobotsParser = crawler_config["modeRobotsParser"]
 	useSplash = crawler_config["useSplash"]
 	saveToCollection = crawler_config["saveToCollection"]
+	start_urls = crawler_config["start_urls"]
+	industry = crawler_config["industry"]
 	print('type_crawler',type_crawler)
 	if type_crawler == 'origin':
 		config_crawl = {
@@ -483,7 +500,9 @@ def crawl_new(namePage):
 			'userAgent': userAgent,
 			'modeRobotsParser': modeRobotsParser,
 			'useSplash':useSplash,
-			'saveToCollection':saveToCollection
+			'saveToCollection':saveToCollection,
+			'start_urls':start_urls,
+			'industry':industry
 		}
 	else:
 		config_crawl = {
@@ -507,7 +526,9 @@ def crawl_new(namePage):
 			'userAgent': userAgent,
 			'modeRobotsParser': modeRobotsParser,
 			'useSplash':useSplash,
-			'saveToCollection':saveToCollection
+			'saveToCollection':saveToCollection,
+			'start_urls':start_urls,
+			'industry':industry
 
 		}
 	
@@ -535,18 +556,44 @@ def crawl_new(namePage):
 		db.crawlers.update_one({"addressPage": namePage},{"$set": {"statusPageCrawl": "Error"}})
 		save_logger_crawler(namePage,"Error",msg)
 		return str(msg)
-def configure_scheduler(namePage):
-	crawler_info = config_crawlers_collection.find_one({'namePage': namePage})
+import logging
+logging.basicConfig(
+	level=logging.INFO,
+	format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+	filename='app.log',  # Specify the log file
+	filemode='a'  # Append to the log file
+)
+def add_job_crawl(namePage,industry):
+	try:
+		logging.info(f'Job is running for {namePage}')
+		crawler_info = db.crawlers.find_one({'addressPage': namePage})
+		if crawler_info['statusPageCrawl'] == 'Pending':
+			logging.info(f'Job is running for {namePage}')
+		else:
+			db.crawlers.update_one({"addressPage": namePage},{"$set": {"statusPageCrawl": "Pending"}})
+			task = crawl_new.delay(namePage,industry)
+			print('task crawler', task.id)
+	except Exception as e:
+		logging.error(f'Error in add_job_crawl: {str(e)}')
+
+#Scheduler
+scheduler = BackgroundScheduler()
+scheduler.start()
+def configure_scheduler(namePage,industry):
+	crawler_info = config_crawlers_collection.find_one({'namePage': namePage,'industry':industry})
 	schedule = crawler_info['timeSchedule']  # Replace this with your schedule data
-	print('schedule',schedule)
+	logging.info(f'Add job {namePage}')
 	for entry in schedule:
 		for hour in entry['hour']:
 			days_of_week = int(entry['day'])
-			scheduler.add_job(crawl_new, 'cron', id=f'{namePage}_{entry["day"]}_{hour}', args=[namePage], day_of_week=days_of_week, hour=hour)
+			scheduler.add_job(add_job_crawl, 'cron', id=f'{namePage}_{entry["day"]}_{hour}', replace_existing=True, args=[namePage,industry], day_of_week=days_of_week, hour=hour)
+	logging.info(f'Scheduler : {scheduler.get_jobs()}')
 def remove_scheduler(namePage):
+	logging.info(f'Remove job {namePage}')
 	jobs_to_remove = [job for job in scheduler.get_jobs() if namePage in job.id]
 	for job in jobs_to_remove:
 		scheduler.remove_job(job.id)
+	logging.info(f'Scheduler after remove: {scheduler.get_jobs()}')
 
 def save_logger_crawler(page,action,message):
 	time_crawl_page = datetime.now().strftime("%Y/%m/%d %H:%M:%S")

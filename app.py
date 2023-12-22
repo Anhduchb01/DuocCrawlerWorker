@@ -11,4 +11,4 @@ celery = Celery("app", broker=os.environ.get("CELERY_BROKER_URL"),backend=os.env
 celery.conf.update(app.config)
 app.register_blueprint(crawler)
 if __name__ == '__main__':    
-	app.run(host="0.0.0.0",port=5000,debug=True)
+	app.run(host="0.0.0.0",port=5000,debug=False)

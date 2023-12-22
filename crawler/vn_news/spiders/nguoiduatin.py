@@ -22,7 +22,10 @@ class NguoiDuaTinSpider(scrapy.Spider):
 		self.summary_html_query = config['summary_html_query']
 
 		self.origin_domain = 'https://www.nguoiduatin.vn'
-		self.start_urls = ['https://www.nguoiduatin.vn/tag-ajax/34687/layout/desktop/page/1']
+		# self.start_urls = ['https://www.nguoiduatin.vn/tag-ajax/34687/layout/desktop/page/1']
+		self.start_urls = config['start_urls']
+		print('start_url',self.start_urls)
+		self.industry = config['industry']
 		self.current_page = 1
 		self.saveToCollection = config['saveToCollection']
 	def parse(self, response):
@@ -43,21 +46,21 @@ class NguoiDuaTinSpider(scrapy.Spider):
 			else:
 				print("No more article links to follow. Stopping the spider.")
 				self.crawler.engine.close_spider(self, 'No more articles to scrape')
-	def formatString(self, text):
-		if isinstance(text, list):  # Check if text is a list
-			text = ' '.join(text)
-		if text is not None :
-			text = text.replace('\r\n','')
-			text = text.replace('\n','')
-			text = "".join(text.rstrip().lstrip())
-		cleaned_text = re.sub(r'[^a-zA-Z0-9À-ỹ\s.,!?]', ' ', str(text))
-		cleaned_string = re.sub(r'\s{2,}', ' ', cleaned_text)
-		
-		return cleaned_string
+	def formatStringContent(self, text):
+		if isinstance(text, list):
+			text = '\n'.join(text)
+		return text
+	def formatTitle(self, text):
+		try :
+			text = re.sub(r'\s{2,}', ' ', text)
+		except Exception as e:
+			print('formatTitle')
+			print(e)
+		return text
 	def parse_article(self, response):
 		# Extract information from the news article page
 		title = response.css(self.title_query+'::text').get()
-		title = self.formatString(title)
+		title = self.formatTitle(title)
 		timeCreatePostOrigin = response.css(self.timeCreatePostOrigin_query+'::text').get()
 		try:
 			date_portion = timeCreatePostOrigin.split(',')[1].split('|')[0].strip()
@@ -67,14 +70,14 @@ class NguoiDuaTinSpider(scrapy.Spider):
 			print('Do Not convert to datetime')
 			print(e)
 		author = response.css(self.author_query+'::text').get()
-		author = self.formatString(author)
+		author = self.formatTitle(author)
 
 		summary = response.css(self.summary_query+'::text').get()
-		summary = self.formatString(summary)
+		summary = self.formatStringContent(summary)
 		summary_html =  response.css(self.summary_html_query).get()
 
 		content = response.css(self.content_query+' ::text').getall()
-		content = self.formatString(content)
+		content = self.formatStringContent(content)
 		content_html = response.css(self.content_html_query).get()
 
 		item = DuocItem(
@@ -86,7 +89,9 @@ class NguoiDuaTinSpider(scrapy.Spider):
 			summary_html = summary_html,
 			content_html = content_html,
 			urlPageCrawl= 'nguoiduatin',
-			url=response.url
+			url=response.url,
+			industry=self.industry,
+			status='0'
 		)
 		if title == '' or title ==None or content =='' or content == None :
 			yield None
