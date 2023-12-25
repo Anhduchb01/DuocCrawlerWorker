@@ -9,12 +9,12 @@ COPY ./requirements.txt .
 
 # install requirements
 RUN pip install -r requirements.txt
-RUN mkdir app.log
+
 # copy project
 COPY . .
 USER root
 RUN chmod -R 777 /app/*
-CMD celery -A app.celery worker  --loglevel=info --pool=eventlet
+CMD ["celery","-A","app.celery","worker","--loglevel=info"]
 # CMD ["python", "app.py"]
 
 
