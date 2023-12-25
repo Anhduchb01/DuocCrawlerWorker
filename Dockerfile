@@ -9,7 +9,7 @@ COPY ./requirements.txt .
 
 # install requirements
 RUN pip install -r requirements.txt
-
+RUN mkdir app.log
 # copy project
 COPY . .
 USER root
