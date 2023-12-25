@@ -556,25 +556,25 @@ def crawl_new(namePage,industry):
 		db.crawlers.update_one({"addressPage": namePage},{"$set": {"statusPageCrawl": "Error"}})
 		save_logger_crawler(namePage,"Error",msg)
 		return str(msg)
-import logging
-logging.basicConfig(
-	level=logging.INFO,
-	format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-	filename='app.log',  # Specify the log file
-	filemode='a'  # Append to the log file
-)
+# import logging
+# logging.basicConfig(
+# 	level=logging.INFO,
+# 	format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+# 	filename='app.log',  # Specify the log file
+# 	filemode='a'  # Append to the log file
+# )
 def add_job_crawl(namePage,industry):
 	try:
-		logging.info(f'Job is running for {namePage}')
+		print(f'Job is running for {namePage}')
 		crawler_info = db.crawlers.find_one({'addressPage': namePage})
 		if crawler_info['statusPageCrawl'] == 'Pending':
-			logging.info(f'Job is running for {namePage}')
+			print(f'Job is running for {namePage}')
 		else:
 			db.crawlers.update_one({"addressPage": namePage},{"$set": {"statusPageCrawl": "Pending"}})
 			task = crawl_new.delay(namePage,industry)
 			print('task crawler', task.id)
 	except Exception as e:
-		logging.error(f'Error in add_job_crawl: {str(e)}')
+		print(f'Error in add_job_crawl: {str(e)}')
 
 #Scheduler
 scheduler = BackgroundScheduler()
@@ -582,18 +582,18 @@ scheduler.start()
 def configure_scheduler(namePage,industry):
 	crawler_info = config_crawlers_collection.find_one({'namePage': namePage,'industry':industry})
 	schedule = crawler_info['timeSchedule']  # Replace this with your schedule data
-	logging.info(f'Add job {namePage}')
+	print(f'Add job {namePage}')
 	for entry in schedule:
 		for hour in entry['hour']:
 			days_of_week = int(entry['day'])
 			scheduler.add_job(add_job_crawl, 'cron', id=f'{namePage}_{entry["day"]}_{hour}', replace_existing=True, args=[namePage,industry], day_of_week=days_of_week, hour=hour)
-	logging.info(f'Scheduler : {scheduler.get_jobs()}')
+	print(f'Scheduler : {scheduler.get_jobs()}')
 def remove_scheduler(namePage):
-	logging.info(f'Remove job {namePage}')
+	print(f'Remove job {namePage}')
 	jobs_to_remove = [job for job in scheduler.get_jobs() if namePage in job.id]
 	for job in jobs_to_remove:
 		scheduler.remove_job(job.id)
-	logging.info(f'Scheduler after remove: {scheduler.get_jobs()}')
+	print(f'Scheduler after remove: {scheduler.get_jobs()}')
 
 def save_logger_crawler(page,action,message):
 	time_crawl_page = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
