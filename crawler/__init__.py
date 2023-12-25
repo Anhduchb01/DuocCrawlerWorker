@@ -206,7 +206,7 @@ def create_crawler():
 
 		config_default_crawler_obj_id = config_default_crawlers_collection.insert_one(config_default_crawler_obj)
 		print(f'Create configDefaultCrawlerObj OK : {config_default_crawler_obj["titlePage"]}')
-		save_logger_crawler(address_page,"Create","")
+		save_logger_crawler(address_page,obj_data_new["industry"],"Create","")
 		return "create success"
 
 	except Exception as err:
@@ -294,11 +294,11 @@ def save_edit_crawl():
 		)
 		if obj_data_edit["modeSchedule"] :
 			print("true")
-			print('Setup Schedule {}'.format(obj_data_edit["titlePage"]))
+			print(f'Setup Schedule {obj_data_edit["titlePage"]} {obj_data_edit["industry"]}')
 			configure_scheduler(obj_data_edit["titlePage"],obj_data_edit["industry"])
 		else :
-			print('Remove Scheduler {}'.format(obj_data_edit["titlePage"]))
-			remove_scheduler(obj_data_edit["titlePage"])
+			print(f'Remove Scheduler {obj_data_edit["titlePage"]} {obj_data_edit["industry"]}')
+			remove_scheduler(obj_data_edit["titlePage"],obj_data_edit["industry"])
 		return "success edit config"
 
 	except Exception as err:
@@ -458,8 +458,8 @@ def run_spider_crawl(spider,config_crawl,addressPage):
 
 @celery.task(name='crawl_new')
 def crawl_new(namePage,industry):
-	crawler_info = db.crawlers.find_one({'addressPage': namePage})
-	crawler_config = db.configcrawlers.find_one({'namePage': namePage})
+	crawler_info = db.crawlers.find_one({'addressPage': namePage,'industry':industry})
+	crawler_config = db.configcrawlers.find_one({'namePage': namePage,'industry':industry})
 	
 	type_crawler = crawler_config["type"]
 	last_date = crawler_info["dateLastCrawler"]
@@ -554,11 +554,11 @@ def crawl_new(namePage,industry):
 	except Exception as e:
 		msg = f"Error occurred during crawl: {str(traceback.format_exc())}"
 		db.crawlers.update_one({"addressPage": namePage},{"$set": {"statusPageCrawl": "Error"}})
-		save_logger_crawler(namePage,"Error",msg)
+		save_logger_crawler(namePage,industry,"Error",msg)
 		return str(msg)
 # import logging
 # logging.basicConfig(
-# 	level=logging.INFO,
+# 	level=print,
 # 	format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
 # 	filename='app.log',  # Specify the log file
 # 	filemode='a'  # Append to the log file
@@ -566,11 +566,11 @@ def crawl_new(namePage,industry):
 def add_job_crawl(namePage,industry):
 	try:
 		print(f'Job is running for {namePage}')
-		crawler_info = db.crawlers.find_one({'addressPage': namePage})
+		crawler_info = db.crawlers.find_one({'addressPage': namePage,'industry':industry})
 		if crawler_info['statusPageCrawl'] == 'Pending':
-			print(f'Job is running for {namePage}')
+			print(f'Job is running for {namePage} {industry}')
 		else:
-			db.crawlers.update_one({"addressPage": namePage},{"$set": {"statusPageCrawl": "Pending"}})
+			db.crawlers.update_one({"addressPage": namePage,'industry':industry},{"$set": {"statusPageCrawl": "Pending"}})
 			task = crawl_new.delay(namePage,industry)
 			print('task crawler', task.id)
 	except Exception as e:
@@ -586,16 +586,17 @@ def configure_scheduler(namePage,industry):
 	for entry in schedule:
 		for hour in entry['hour']:
 			days_of_week = int(entry['day'])
-			scheduler.add_job(add_job_crawl, 'cron', id=f'{namePage}_{entry["day"]}_{hour}', replace_existing=True, args=[namePage,industry], day_of_week=days_of_week, hour=hour)
+			scheduler.add_job(add_job_crawl, 'cron', id=f'{namePage}_{industry}_{entry["day"]}_{hour}', replace_existing=True, args=[namePage,industry], day_of_week=days_of_week, hour=hour)
 	print(f'Scheduler : {scheduler.get_jobs()}')
-def remove_scheduler(namePage):
-	print(f'Remove job {namePage}')
-	jobs_to_remove = [job for job in scheduler.get_jobs() if namePage in job.id]
+def remove_scheduler(namePage,industry):
+	print(f'Remove job {namePage} {industry}')
+	namejob = f"{namePage}_{industry}"
+	jobs_to_remove = [job for job in scheduler.get_jobs() if namejob in job.id]
 	for job in jobs_to_remove:
 		scheduler.remove_job(job.id)
 	print(f'Scheduler after remove: {scheduler.get_jobs()}')
 
-def save_logger_crawler(page,action,message):
+def save_logger_crawler(page,industry,action,message):
 	time_crawl_page = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
 	string_message = ""
 	if action == "Create":
@@ -608,6 +609,7 @@ def save_logger_crawler(page,action,message):
 	log_entry = {
 		'action': action,
 		'page': page,
+		"industry":industry,
 		'message': string_message,
 		'timelog': time_crawl_page
 	}
