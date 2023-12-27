@@ -26,6 +26,11 @@ NEWSPIDER_MODULE = "vn_news.spiders"
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = "vn_news (+http://www.yourdomain.com)"
 
+
+# Your other Scrapy settings...
+
+# Set the cache directory for tldextract
+
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
 DOWNLOAD_MAXSIZE = 5368709120
