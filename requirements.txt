@@ -2,7 +2,7 @@ flask==2.3.3
 Flask-Cors==4.0.0
 flask_cors
 apscheduler
-scrapy
+scrapy==2.10.1
 crochet
 pymongo
 python-dotenv
