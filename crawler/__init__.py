@@ -27,6 +27,7 @@ from rq import Queue, Connection
 from bson.json_util import dumps, loads
 load_dotenv()
 DB_URL = os.environ.get('DB_URL')
+print('DB_URL',DB_URL)
 DB_Name = os.environ.get('DB_Name')
 SPLASH_URL = os.environ.get('SPLASH_URL')
 client = MongoClient(DB_URL)
@@ -216,9 +217,10 @@ def create_crawler():
 def remove_crawler():
 	try:
 		name_page = request.json["namePage"]
-		config_default_crawlers_collection.delete_one({"titlePage": name_page})
-		crawlers_collection.delete_one({"addressPage": name_page})
-		config_crawlers_collection.delete_one({"namePage": name_page})
+		industry = request.json["industry"]
+		config_default_crawlers_collection.delete_one({"titlePage": name_page,"industry":industry})
+		crawlers_collection.delete_one({"addressPage": name_page,"industry":industry})
+		config_crawlers_collection.delete_one({"namePage": name_page,"industry":industry})
 		return "remove crawler success"
 
 	except Exception as err:
@@ -380,7 +382,7 @@ def crawl():
 	if crawler_info['statusPageCrawl'] == 'Pending':
 		return  jsonify({"msg":"Crawler is running","namePage":namePage,"industry":industry}), 200
 	else:
-		db.crawlers.update_one({"addressPage": namePage},{"$set": {"statusPageCrawl": "Pending"}})
+		db.crawlers.update_one({"addressPage": namePage,"industry":industry},{"$set": {"statusPageCrawl": "Pending"}})
 		task = crawl_new.delay(namePage,industry)
 		return jsonify({"msg":"excute successfully crawler","namePage":namePage,"industry":industry,"task_id": task.id}), 200
 @crawler.route("/tasks/<task_id>", methods=["GET"])
@@ -556,13 +558,7 @@ def crawl_new(namePage,industry):
 		db.crawlers.update_one({"addressPage": namePage},{"$set": {"statusPageCrawl": "Error"}})
 		save_logger_crawler(namePage,industry,"Error",msg)
 		return str(msg)
-# import logging
-# logging.basicConfig(
-# 	level=print,
-# 	format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-# 	filename='app.log',  # Specify the log file
-# 	filemode='a'  # Append to the log file
-# )
+
 def add_job_crawl(namePage,industry):
 	try:
 		print(f'Job is running for {namePage}')

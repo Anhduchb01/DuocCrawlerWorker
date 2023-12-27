@@ -7,7 +7,6 @@
 # useful for handling different item types with a single interface
 from itemadapter import ItemAdapter
 import pymongo
-# import logging
 from datetime import datetime
 import dateutil.parser
 
@@ -15,7 +14,6 @@ from datetime import datetime
 class VnNewsPipeline:
 	def process_item(self, item, spider):
 		return item
-	
 
 class MongoPipeline(object):
 	def __init__(self, mongo_uri, mongo_db):
@@ -28,7 +26,6 @@ class MongoPipeline(object):
 			mongo_uri=crawler.settings.get('MONGO_URI'),
 			mongo_db=crawler.settings.get('MONGO_DB')
 		)
-
 	def open_spider(self, spider):
 		print('Start crawling! ',spider.namePage)
 		self.client = pymongo.MongoClient(self.mongo_uri)
