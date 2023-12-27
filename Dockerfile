@@ -3,7 +3,7 @@ FROM registry.apps.xplat.fis.com.vn/library/python:3.9.17-bullseye
 
 # Install Telnet
 RUN apt-get update && apt-get install -y telnet
-RUN echo "hello" > /.cache/hello.txt
+RUN mkdir -p /.cache && echo "hello" > /.cache/hello.txt
 RUN cat /.cache/hello.txt
 
 
