@@ -1,20 +1,31 @@
 # base image
 FROM registry.apps.xplat.fis.com.vn/library/python:3.9.17-bullseye
+
+# Install Telnet
+RUN apt-get update && apt-get install -y telnet
+
+# Create app directory
 RUN mkdir /app
-# set working directory
+
+# Set working directory
 WORKDIR /app
+
+# Upgrade pip
 RUN pip install --upgrade pip
-# add requirements (to leverage Docker cache)
+
+# Add requirements (to leverage Docker cache)
 COPY ./requirements.txt .
 
-# install requirements
+# Install requirements
 RUN pip install -r requirements.txt
 
-# copy project
+# Copy project
 COPY . .
+
+# Set permissions (if needed)
 USER root
 RUN chmod -R 777 /app/*
-CMD ["celery","-A","app.celery","worker","--loglevel=info"]
+
+# Define the default command to start your application
+CMD ["celery", "-A", "app.celery", "worker", "--loglevel=info"]
 # CMD ["python", "app.py"]
-
-
