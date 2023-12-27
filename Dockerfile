@@ -26,7 +26,7 @@ COPY . .
 # Set permissions (if needed)
 USER root
 RUN chmod -R 777 /app/*
-RUN chmod -R 777 /.cache
+RUN chmod -R 777 ~/.cache
 
 # Define the default command to start your application
 CMD ["celery", "-A", "app.celery", "worker", "--loglevel=info"]
