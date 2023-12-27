@@ -22,14 +22,16 @@ class CafebizDuocSpider(scrapy.Spider):
 
 		self.origin_domain = 'https://cafebiz.vn'
 		self.start_urls = config['start_urls']
-		print('start_url',self.start_urls)
+		
 		# self.start_urls = [
 		# 'https://cafebiz.vn/timelinetag/duoc-pham/1.htm', 'https://cafebiz.vn/timelinetag/duoc/1.htm','https://cafebiz.vn/timelinetag/thuoc/1.htm','https://cafebiz.vn/timelinetag/nha-thuoc/1.htm'
 		# ]
 		self.industry = config['industry']
 		self.current_page = 1
 		self.saveToCollection = config['saveToCollection']
+		print('start_url spider',self.start_urls)
 	def parse(self, response):
+		print('START parse cafebiz',response.url)
 		# Extract news article URLs from the page
 		article_links = response.css(self.article_url_query+'::attr(href)').getall()
 		# Follow each article URL and parse the article page
