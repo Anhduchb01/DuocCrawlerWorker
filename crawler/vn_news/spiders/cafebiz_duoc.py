@@ -4,10 +4,10 @@ from datetime import datetime
 import re
 class CafebizDuocSpider(scrapy.Spider):
 	name = "cafebiz"
-	# allowed_domains = ["cafebiz.vn"]
-	start_urls = [
-		'https://cafebiz.vn/timelinetag/duoc-pham/1.htm', 'https://cafebiz.vn/timelinetag/duoc/1.htm','https://cafebiz.vn/timelinetag/thuoc/1.htm','https://cafebiz.vn/timelinetag/nha-thuoc/1.htm'
-		]
+	allowed_domains = ["cafebiz.vn"]
+	# start_urls = [
+	# 	'https://cafebiz.vn/timelinetag/duoc-pham/1.htm', 'https://cafebiz.vn/timelinetag/duoc/1.htm','https://cafebiz.vn/timelinetag/thuoc/1.htm','https://cafebiz.vn/timelinetag/nha-thuoc/1.htm'
+	# 	]
 	def __init__(self,config=None, *args, **kwargs):
 		super(CafebizDuocSpider, self).__init__(*args, **kwargs)
 		self.namePage = 'cafebiz'
@@ -29,10 +29,14 @@ class CafebizDuocSpider(scrapy.Spider):
 		self.industry = config['industry']
 		self.current_page = 1
 		self.saveToCollection = config['saveToCollection']
-		print('start_url spider',self.start_urls)
+		print('init spider ok')
 	def start_requests(self):
 		print('START REquest')
-		for url in self.start_urls:
+		urls = [
+            'https://cafebiz.vn/timelinetag/duoc-pham/1.htm'
+        ]
+		for url in urls:
+			print('url',url)
 			yield scrapy.Request(url=url, callback=self.parse)
 	def parse(self, response):
 		print('START parse cafebiz',response.url)
