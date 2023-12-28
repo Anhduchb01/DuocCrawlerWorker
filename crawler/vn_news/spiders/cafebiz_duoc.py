@@ -4,7 +4,7 @@ from datetime import datetime
 import re
 class CafebizDuocSpider(scrapy.Spider):
 	name = "cafebiz"
-	allowed_domains = ["cafebiz.vn"]
+	# allowed_domains = ["cafebiz.vn"]
 	start_urls = [
 		'https://cafebiz.vn/timelinetag/duoc-pham/1.htm', 'https://cafebiz.vn/timelinetag/duoc/1.htm','https://cafebiz.vn/timelinetag/thuoc/1.htm','https://cafebiz.vn/timelinetag/nha-thuoc/1.htm'
 		]

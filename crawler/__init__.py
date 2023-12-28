@@ -401,6 +401,9 @@ def run_spider_crawl(spider,config_crawl,addressPage):
 		"ITEM_PIPELINES":{MongoPipeline: 400}
 	})
 	setting.update({
+		"TELNETCONSOLE_ENABLED":False
+	})
+	setting.update({
 		"MONGO_URI": DB_URL
 	})
 	setting.update({
@@ -452,6 +455,7 @@ def run_spider_crawl(spider,config_crawl,addressPage):
 	# 		}
 	# 	})
 	print('setting',setting.copy_to_dict())
+	print('setting TELNETCONSOLE_ENABLED',setting.copy_to_dict()['TELNETCONSOLE_ENABLED'])
 	crawl_runner = CrawlerRunner(setting)
 	eventual = crawl_runner.crawl(
 		spider,config = config_crawl)
