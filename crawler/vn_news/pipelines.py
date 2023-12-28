@@ -32,8 +32,6 @@ class MongoPipeline(object):
 		self.db = self.client[self.mongo_db]
 		self.db.crawlers.update_one({'addressPage': spider.namePage,'industry':spider.industry}, {'$set': {'increasePost': 0}})
 		print(self.db.crawlers.find_one({'addressPage': spider.namePage,'industry':spider.industry}))
-		print('Start crawling START URL! ',spider.start_urls)
-		print('type ',type(spider.start_urls))
 
 	def process_item(self, item, spider):
 		name = item.__class__.__name__

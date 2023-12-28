@@ -1,7 +1,5 @@
 
 from flask import Flask, request, jsonify ,Blueprint ,current_app
-from twisted.internet import reactor
-from scrapy.utils.log import configure_logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from scrapy.crawler import CrawlerProcess, CrawlerRunner
 from scrapy.utils.project import get_project_settings
@@ -385,9 +383,9 @@ def crawl():
 		return  jsonify({"msg":"Crawler is running","namePage":namePage,"industry":industry}), 200
 	else:
 		db.crawlers.update_one({"addressPage": namePage,"industry":industry},{"$set": {"statusPageCrawl": "Pending"}})
-		# task = crawl_new.delay(namePage,industry)
-		task = crawl_new(namePage,industry)
-		return jsonify({"msg":"excute successfully crawler","namePage":namePage,"industry":industry}), 200
+		task = crawl_new.delay(namePage,industry)
+		# task = crawl_new(namePage,industry)
+		return jsonify({"msg":"excute successfully crawler","namePage":namePage,"industry":industry,"taskid":task.id}), 200
 @crawler.route("/tasks/<task_id>", methods=["GET"])
 def get_status(task_id):
 	task_result = AsyncResult(task_id)
@@ -397,15 +395,12 @@ def get_status(task_id):
 		"task_result": task_result.result
 	}
 	return jsonify(result), 200
-@crochet.wait_for(timeout=600000.0)
+@crochet.wait_for(600000.0)
 def run_spider_crawl(spider,config_crawl,addressPage):
 	print('config_crawl_crophet',config_crawl)
 	setting = get_project_settings()
 	setting.update({
 		"ITEM_PIPELINES":{MongoPipeline: 400}
-	})
-	setting.update({
-		"TELNETCONSOLE_ENABLED":True
 	})
 	setting.update({
 		"MONGO_URI": DB_URL
@@ -430,7 +425,7 @@ def run_spider_crawl(spider,config_crawl,addressPage):
 		"USER_AGENT": config_crawl['userAgent']
 		})
 	setting.update({
-	"ROBOTSTXT_OBEY": config_crawl['modeRobotsParser']
+	"DOWNLOAD_TIMEOUT": config_crawl['modeRobotsParser']
 	})
 	print('START CRAWL')
 	if config_crawl['useSplash']:
@@ -459,11 +454,11 @@ def run_spider_crawl(spider,config_crawl,addressPage):
 	# 		}
 	# 	})
 	print('setting',setting.copy_to_dict())
-	print('setting TELNETCONSOLE_ENABLED',setting.copy_to_dict()['TELNETCONSOLE_ENABLED'])
 	crawl_runner = CrawlerRunner(setting)
 	eventual = crawl_runner.crawl(
 		spider,config = config_crawl)
-	return eventual
+	
+	return eventual 
 
 @celery.task(name='crawl_new')
 def crawl_new(namePage,industry):

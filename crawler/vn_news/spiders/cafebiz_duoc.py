@@ -5,9 +5,6 @@ import re
 class CafebizDuocSpider(scrapy.Spider):
 	name = "cafebiz"
 	allowed_domains = ["cafebiz.vn"]
-	# start_urls = [
-	# 	'https://cafebiz.vn/timelinetag/duoc-pham/1.htm', 'https://cafebiz.vn/timelinetag/duoc/1.htm','https://cafebiz.vn/timelinetag/thuoc/1.htm','https://cafebiz.vn/timelinetag/nha-thuoc/1.htm'
-	# 	]
 	def __init__(self,config=None, *args, **kwargs):
 		super(CafebizDuocSpider, self).__init__(*args, **kwargs)
 		self.namePage = 'cafebiz'
@@ -24,22 +21,15 @@ class CafebizDuocSpider(scrapy.Spider):
 		self.summary_html_query = config['summary_html_query']
 
 		self.origin_domain = 'https://cafebiz.vn'
-		# self.start_urls = config['start_urls']
-
+		self.start_urls = config['start_urls']
+		print('start_url',self.start_urls)
+		# self.start_urls = [
+		# 'https://cafebiz.vn/timelinetag/duoc-pham/1.htm', 'https://cafebiz.vn/timelinetag/duoc/1.htm','https://cafebiz.vn/timelinetag/thuoc/1.htm','https://cafebiz.vn/timelinetag/nha-thuoc/1.htm'
+		# ]
 		self.industry = config['industry']
 		self.current_page = 1
 		self.saveToCollection = config['saveToCollection']
-		print('init spider ok')
-	def start_requests(self):
-		print('START REquest')
-		urls = [
-            'https://cafebiz.vn/timelinetag/duoc-pham/1.htm'
-        ]
-		for url in urls:
-			print('url',url)
-			yield scrapy.Request(url=url, callback=self.parse)
 	def parse(self, response):
-		print('START parse cafebiz',response.url)
 		# Extract news article URLs from the page
 		article_links = response.css(self.article_url_query+'::attr(href)').getall()
 		# Follow each article URL and parse the article page
