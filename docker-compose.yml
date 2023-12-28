@@ -54,7 +54,7 @@ services:
       - MONGODB_ROOT_PASSWORD=root12345
       - MONGODB_USERNAME=admin
       - MONGODB_PASSWORD=admin123
-      - MONGODB_DATABASE=Duoc
+      - MONGODB_DATABASE=duoc1
     ports:
       - 27018:27017
     volumes:

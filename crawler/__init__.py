@@ -396,6 +396,7 @@ def get_status(task_id):
 		"task_result": task_result.result
 	}
 	return jsonify(result), 200
+@crochet.wait_for(timeout=600000.0)
 def run_spider_crawl(spider,config_crawl,addressPage):
 	print('config_crawl_crophet',config_crawl)
 	setting = get_project_settings()
@@ -461,7 +462,10 @@ def run_spider_crawl(spider,config_crawl,addressPage):
 	crawl_runner = CrawlerRunner(setting)
 	eventual = crawl_runner.crawl(
 		spider,config = config_crawl)
-	# When the crawling is finished, stop the reactor
+	d= eventual.join()
+	d.addBoth(lambda _: reactor.stop())
+	reactor.run()
+
 @celery.task(name='crawl_new')
 def crawl_new(namePage,industry):
 	crawler_info = db.crawlers.find_one({'addressPage': namePage,'industry':industry})
