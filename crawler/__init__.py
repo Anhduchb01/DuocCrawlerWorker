@@ -34,8 +34,8 @@ DB_Name = os.environ.get('DB_Name')
 SPLASH_URL = os.environ.get('SPLASH_URL')
 client = MongoClient(DB_URL)
 crawler = Blueprint('crawler', __name__)
-import crochet
-crochet.setup()
+# import crochet
+# crochet.setup()
 output_data = []
 # client = MongoClient("mongodb://crawl02:crawl02123@localhost:27017/?authSource=Duoc")
 
@@ -396,7 +396,7 @@ def get_status(task_id):
 		"task_result": task_result.result
 	}
 	return jsonify(result), 200
-@crochet.wait_for(timeout=600000.0)
+# @crochet.wait_for(timeout=600000.0)
 def run_spider_crawl(spider,config_crawl,addressPage):
 	print('config_crawl_crophet',config_crawl)
 	setting = get_project_settings()
@@ -462,9 +462,7 @@ def run_spider_crawl(spider,config_crawl,addressPage):
 	crawl_runner = CrawlerRunner(setting)
 	eventual = crawl_runner.crawl(
 		spider,config = config_crawl)
-	d= eventual.join()
-	d.addBoth(lambda _: reactor.stop())
-	reactor.run()
+	return eventual
 
 @celery.task(name='crawl_new')
 def crawl_new(namePage,industry):
