@@ -402,7 +402,7 @@ def run_spider_crawl(spider,config_crawl,addressPage):
 		"ITEM_PIPELINES":{MongoPipeline: 400}
 	})
 	setting.update({
-		"TELNETCONSOLE_ENABLED":False
+		"TELNETCONSOLE_ENABLED":True
 	})
 	setting.update({
 		"MONGO_URI": DB_URL
@@ -427,7 +427,7 @@ def run_spider_crawl(spider,config_crawl,addressPage):
 		"USER_AGENT": config_crawl['userAgent']
 		})
 	setting.update({
-	"DOWNLOAD_TIMEOUT": config_crawl['modeRobotsParser']
+	"ROBOTSTXT_OBEY": config_crawl['modeRobotsParser']
 	})
 	print('START CRAWL')
 	if config_crawl['useSplash']:
@@ -460,8 +460,7 @@ def run_spider_crawl(spider,config_crawl,addressPage):
 	crawl_runner = CrawlerRunner(setting)
 	eventual = crawl_runner.crawl(
 		spider,config = config_crawl)
-	eventual.addBoth(lambda _: reactor.stop())
-	reactor.run()
+
 	
 	return eventual 
 
