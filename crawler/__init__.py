@@ -1,5 +1,6 @@
 
 from flask import Flask, request, jsonify ,Blueprint ,current_app
+from twisted.internet import reactor
 from apscheduler.schedulers.background import BackgroundScheduler
 from scrapy.crawler import CrawlerProcess, CrawlerRunner
 from scrapy.utils.project import get_project_settings
@@ -459,6 +460,8 @@ def run_spider_crawl(spider,config_crawl,addressPage):
 	crawl_runner = CrawlerRunner(setting)
 	eventual = crawl_runner.crawl(
 		spider,config = config_crawl)
+	eventual.addBoth(lambda _: reactor.stop())
+	reactor.run()
 	
 	return eventual 
 
