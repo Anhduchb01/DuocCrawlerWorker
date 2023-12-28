@@ -30,6 +30,10 @@ class CafebizDuocSpider(scrapy.Spider):
 		self.current_page = 1
 		self.saveToCollection = config['saveToCollection']
 		print('start_url spider',self.start_urls)
+	def start_requests(self):
+		print('START REquest')
+		for url in self.start_urls:
+			yield scrapy.Request(url=url, callback=self.parse)
 	def parse(self, response):
 		print('START parse cafebiz',response.url)
 		# Extract news article URLs from the page
