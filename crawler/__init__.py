@@ -460,14 +460,11 @@ def run_spider_crawl(spider,config_crawl,addressPage):
 	print('setting TELNETCONSOLE_ENABLED',setting.copy_to_dict()['TELNETCONSOLE_ENABLED'])
 	configure_logging()
 	crawl_runner = CrawlerRunner(setting)
+	reactor.run()
 	eventual = crawl_runner.crawl(
 		spider,config = config_crawl)
 	# When the crawling is finished, stop the reactor
 	eventual.addBoth(lambda _: reactor.stop())
-	# Start the reactor
-	reactor.run()
-
-	# return eventual 
 
 @celery.task(name='crawl_new')
 def crawl_new(namePage,industry):
