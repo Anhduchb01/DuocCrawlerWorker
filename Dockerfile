@@ -1,12 +1,5 @@
 # base image
-FROM python:3.9.17-bullseye
-
-# Install Telnet
-RUN apt-get update && apt-get install -y telnet
-RUN mkdir -p /.cache && echo "hello" > /.cache/hello.txt
-RUN cat /.cache/hello.txt
-
-
+FROM registry.apps.xplat.fis.com.vn/library/python:3.9.17-bullseye
 # Create app directory
 RUN mkdir /app
 
@@ -28,8 +21,7 @@ COPY . .
 # Set permissions (if needed)
 USER root
 RUN chmod -R 777 /app/*
-RUN chmod -R 777 /.cache/*
 
 # Define the default command to start your application
-CMD ["celery", "-A", "app.celery", "worker", "--loglevel=info"]
+CMD ["celery", "-A", "app.celery", "worker", "--loglevel=info","--pool=eventlet"]
 # CMD ["python", "app.py"]
