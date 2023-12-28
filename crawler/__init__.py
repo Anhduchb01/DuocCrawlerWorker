@@ -34,8 +34,8 @@ DB_Name = os.environ.get('DB_Name')
 SPLASH_URL = os.environ.get('SPLASH_URL')
 client = MongoClient(DB_URL)
 crawler = Blueprint('crawler', __name__)
-# import crochet
-# crochet.setup()
+import crochet
+crochet.setup()
 output_data = []
 # client = MongoClient("mongodb://crawl02:crawl02123@localhost:27017/?authSource=Duoc")
 
@@ -385,8 +385,9 @@ def crawl():
 		return  jsonify({"msg":"Crawler is running","namePage":namePage,"industry":industry}), 200
 	else:
 		db.crawlers.update_one({"addressPage": namePage,"industry":industry},{"$set": {"statusPageCrawl": "Pending"}})
-		task = crawl_new.delay(namePage,industry)
-		return jsonify({"msg":"excute successfully crawler","namePage":namePage,"industry":industry,"task_id": task.id}), 200
+		# task = crawl_new.delay(namePage,industry)
+		task = crawl_new(namePage,industry)
+		return jsonify({"msg":"excute successfully crawler","namePage":namePage,"industry":industry}), 200
 @crawler.route("/tasks/<task_id>", methods=["GET"])
 def get_status(task_id):
 	task_result = AsyncResult(task_id)
@@ -396,7 +397,7 @@ def get_status(task_id):
 		"task_result": task_result.result
 	}
 	return jsonify(result), 200
-# @crochet.wait_for(timeout=600000.0)
+@crochet.wait_for(timeout=600000.0)
 def run_spider_crawl(spider,config_crawl,addressPage):
 	print('config_crawl_crophet',config_crawl)
 	setting = get_project_settings()
@@ -464,7 +465,8 @@ def run_spider_crawl(spider,config_crawl,addressPage):
 		spider,config = config_crawl)
 	return eventual
 
-@celery.task(name='crawl_new')
+# @celery.task(name='crawl_new')
+
 def crawl_new(namePage,industry):
 	crawler_info = db.crawlers.find_one({'addressPage': namePage,'industry':industry})
 	crawler_config = db.configcrawlers.find_one({'namePage': namePage,'industry':industry})
