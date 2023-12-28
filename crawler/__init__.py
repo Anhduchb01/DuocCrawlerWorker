@@ -1,6 +1,7 @@
 
 from flask import Flask, request, jsonify ,Blueprint ,current_app
 from twisted.internet import reactor
+from scrapy.utils.log import configure_logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from scrapy.crawler import CrawlerProcess, CrawlerRunner
 from scrapy.utils.project import get_project_settings
@@ -457,12 +458,16 @@ def run_spider_crawl(spider,config_crawl,addressPage):
 	# 	})
 	print('setting',setting.copy_to_dict())
 	print('setting TELNETCONSOLE_ENABLED',setting.copy_to_dict()['TELNETCONSOLE_ENABLED'])
+	configure_logging()
 	crawl_runner = CrawlerRunner(setting)
 	eventual = crawl_runner.crawl(
 		spider,config = config_crawl)
+	# When the crawling is finished, stop the reactor
+	eventual.addBoth(lambda _: reactor.stop())
+	# Start the reactor
+	reactor.run()
 
-	
-	return eventual 
+	# return eventual 
 
 @celery.task(name='crawl_new')
 def crawl_new(namePage,industry):
