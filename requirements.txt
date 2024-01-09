@@ -1,6 +1,7 @@
 flask==2.3.3
 Flask-Cors==4.0.0
 flask_cors
+flask_oidc
 apscheduler
 scrapy==2.10.1
 crochet

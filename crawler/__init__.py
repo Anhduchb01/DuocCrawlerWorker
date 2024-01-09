@@ -25,13 +25,15 @@ from dotenv import load_dotenv
 import redis 
 from rq import Queue, Connection
 from bson.json_util import dumps, loads
+from app import oidc
+
 load_dotenv()
 DB_URL = os.environ.get('DB_URL')
 print('DB_URL',DB_URL)
 DB_Name = os.environ.get('DB_Name')
 SPLASH_URL = os.environ.get('SPLASH_URL')
 client = MongoClient(DB_URL)
-crawler = Blueprint('crawler', __name__)
+crawler_blueprint = Blueprint('crawler', __name__)
 import crochet
 crochet.setup()
 output_data = []
@@ -48,11 +50,12 @@ import os
 
 celery = Celery("app", broker=os.environ.get("CELERY_BROKER_URL"),backend=os.environ.get("CELERY_RESULT_BACKEND"))
 print('DB_Name',DB_Name)
-@crawler.route("/", methods=['GET', 'POST'])
+@crawler_blueprint.route("/", methods=['GET', 'POST'])
 def main():
 		return '<h1>API PYTHON CRWALER</h1>'
 
-@crawler.route('/upload_crawlers', methods=['POST'])
+@crawler_blueprint.route('/upload_crawlers', methods=['POST'])
+@oidc.accept_token()
 def upload_crawlers():
 	try:
 		if 'config' not in request.files or 'crawler' not in request.files or 'configdefault' not in request.files:
@@ -80,7 +83,8 @@ def upload_crawlers():
 	except Exception as e:
 		return jsonify({"error": str(e)}), 500
 
-@crawler.route('/upload_posts', methods=['POST'])
+@crawler_blueprint.route('/upload_posts', methods=['POST'])
+@oidc.accept_token()
 def upload_posts():
 	try:
 		if 'posts' not in request.files :
@@ -120,7 +124,8 @@ def insertPost(post):
 			del postObj['_id']
 	posts_collection.insert_many(post)
 	return {"data": "finish"}
-@crawler.route("/create-crawler", methods=["POST"])
+@crawler_blueprint.route("/create-crawler", methods=["POST"])
+@oidc.accept_token()
 def create_crawler():
 	try:
 		obj_data_new = request.json["objDataNew"]
@@ -213,7 +218,8 @@ def create_crawler():
 	except Exception as err:
 		print(err)
 		return str(err), 502
-@crawler.route("/remove-crawler", methods=["POST"])
+@crawler_blueprint.route("/remove-crawler", methods=["POST"])
+@oidc.accept_token()
 def remove_crawler():
 	try:
 		name_page = request.json["namePage"]
@@ -226,7 +232,8 @@ def remove_crawler():
 	except Exception as err:
 		print(err)
 		return str(err), 502
-@crawler.route("/crawler-get-information", methods=["GET"])
+@crawler_blueprint.route("/crawler-get-information", methods=["GET"])
+@oidc.accept_token()
 def get_crawler_information():
 	try:
 		industry = request.args.get('industry') 
@@ -236,7 +243,8 @@ def get_crawler_information():
 	except Exception as err:
 		print(err)
 		return str(err), 500
-@crawler.route("/get-data-edit-crawl", methods=["GET"])
+@crawler_blueprint.route("/get-data-edit-crawl", methods=["GET"])
+@oidc.accept_token()
 def get_data_edit_crawl():
 	try:
 		industry = request.args.get('industry') 
@@ -246,7 +254,8 @@ def get_data_edit_crawl():
 	except Exception as err:
 		print(err)
 		return str(err), 500
-@crawler.route("/save-edit-crawl", methods=["POST"])
+@crawler_blueprint.route("/save-edit-crawl", methods=["POST"])
+@oidc.accept_token()
 def save_edit_crawl():
 	try:
 		obj_data_edit = request.json["objDataEdit"]
@@ -306,7 +315,8 @@ def save_edit_crawl():
 	except Exception as err:
 		print(err)
 		return str(err), 500
-@crawler.route("/save-edit-crawl-create", methods=["POST"])
+@crawler_blueprint.route("/save-edit-crawl-create", methods=["POST"])
+@oidc.accept_token()
 def save_edit_crawl_create():
 	try:
 		obj_data_edit = request.json["objDataEdit"]
@@ -373,7 +383,8 @@ def save_edit_crawl_create():
 	except Exception as err:
 		print(err)
 		return str(err), 500
-@crawler.route("/crawl", methods=['GET', 'POST'])
+@crawler_blueprint.route("/crawl", methods=['GET', 'POST'])
+@oidc.accept_token()
 def crawl():
 	data = request.get_json()
 	namePage = data['namePage']
@@ -386,7 +397,8 @@ def crawl():
 		task = crawl_new.delay(namePage,industry)
 		# task = crawl_new(namePage,industry)
 		return jsonify({"msg":"excute successfully crawler","namePage":namePage,"industry":industry,"taskid":task.id}), 200
-@crawler.route("/tasks/<task_id>", methods=["GET"])
+@crawler_blueprint.route("/tasks/<task_id>", methods=["GET"])
+@oidc.accept_token()
 def get_status(task_id):
 	task_result = AsyncResult(task_id)
 	result = {
