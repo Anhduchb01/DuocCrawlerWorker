@@ -23,5 +23,5 @@ USER root
 RUN chmod -R 777 /app/*
 
 # Define the default command to start your application
-CMD ["celery", "-A", "app.celery", "worker", "--loglevel=info","--pool=eventlet"]
+CMD ["celery", "-A", "crawler.celery", "worker", "--loglevel=info","--pool=eventlet"]
 # CMD ["python", "app.py"]
