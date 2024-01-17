@@ -11,6 +11,9 @@ from datetime import datetime
 import dateutil.parser
 from scrapy.exceptions import CloseSpider
 from datetime import datetime
+
+from cssselect.parser import SelectorSyntaxError
+from scrapy.exceptions import CloseSpider
 class VnNewsPipeline:
 	def process_item(self, item, spider):
 		return item
@@ -71,6 +74,19 @@ class MongoPipeline(object):
 			print('not have title and content')
 		
 		return item
+	def process_exception(self, request, exception, spider):
+		print('Error crawling process_exception! ',spider.namePage)
+		if isinstance(exception, SelectorSyntaxError):
+			print('Error crawling process_exception SelectorSyntaxError! ',spider.namePage)
+			error_message = repr(exception)
+			curren_crawler = self.db.crawlers.find_one({'addressPage': spider.namePage,'industry':spider.industry})
+			time_crawl_page = datetime.now().strftime("%Y/%m/%d")
+			self.db.crawlers.update_one({'addressPage': spider.namePage,'industry':spider.industry}, {'$set': {'statusPageCrawl': 'Error','dateLastCrawler':time_crawl_page,'sumPost':int(curren_crawler['sumPost'])+int(curren_crawler['increasePost'])}})
+			self.save_logger_crawler(spider.namePage,spider.industry,"Error",error_message)
+			print('Update status Error for crawler item',spider.namePage)
+			spider.crawler.engine.close_spider(self, reason='error')
+			self.client.close()
+			raise CloseSpider(reason=error_message)
 	def item_error(self, failure, response, spider):
 		print('Error crawling item! ',spider.namePage)
 		error = failure.getTraceback()
