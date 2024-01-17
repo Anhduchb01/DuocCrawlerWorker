@@ -159,6 +159,50 @@ def create_crawler():
 		content_query_split = obj_data_new["content_query"].split(' ')
 		if content_query_split and content_query_split[-1] == "p":
 			content_query_split.pop()
+		timeSchedule= [
+				{
+			"day": "0",
+			"hour": [
+				1
+			]
+			},
+			{
+			"day": "1",
+			"hour": [
+				1
+			]
+			},
+			{
+			"day": "2",
+			"hour": [
+				1
+			]
+			},
+			{
+			"day": "3",
+			"hour": [
+				1
+			]
+			},
+			{
+			"day": "4",
+			"hour": [
+				1
+			]
+			},
+			{
+			"day": "5",
+			"hour": [
+				1
+			]
+			},
+			{
+			"day": "6",
+			"hour": [
+				1
+			]
+			}
+		]
 
 		obj_data_new["content_html_query"] = ' '.join(content_query_split)
 		config_crawler_obj = {
@@ -166,7 +210,7 @@ def create_crawler():
 			"modeSchedule": obj_data_new["modeSchedule"],
 			"namePage": address_page,
 			"urlPage": obj_data_new["urlPage"],
-			"timeSchedule": obj_data_new["timeSchedule"],
+			"timeSchedule": timeSchedule,
 			"modeRobotsParser": obj_data_new["modeRobotsParser"],
 			"timeOutCrawl": obj_data_new["timeOutCrawl"],
 			"numberRetryCrawl": obj_data_new["numberRetryCrawl"],
@@ -260,11 +304,54 @@ def save_edit_crawl():
 	try:
 		obj_data_edit = request.json["objDataEdit"]
 
-		for i in range(len(obj_data_edit["timeSchedule"])):
-			obj_data_edit["timeSchedule"][i]["hour"] = obj_data_edit["timeSchedule"][i]["hour"] or []
-			if obj_data_edit["timeSchedule"][i]["hour"]:
-				obj_data_edit["timeSchedule"][i]["hour"] = list(map(int, obj_data_edit["timeSchedule"][i]["hour"]))
-
+		# for i in range(len(obj_data_edit["timeSchedule"])):
+		# 	obj_data_edit["timeSchedule"][i]["hour"] = obj_data_edit["timeSchedule"][i]["hour"] or []
+		# 	if obj_data_edit["timeSchedule"][i]["hour"]:
+		# 		obj_data_edit["timeSchedule"][i]["hour"] = list(map(int, obj_data_edit["timeSchedule"][i]["hour"]))
+		timeSchedule= [
+				{
+			"day": "0",
+			"hour": [
+				1
+			]
+			},
+			{
+			"day": "1",
+			"hour": [
+				1
+			]
+			},
+			{
+			"day": "2",
+			"hour": [
+				1
+			]
+			},
+			{
+			"day": "3",
+			"hour": [
+				1
+			]
+			},
+			{
+			"day": "4",
+			"hour": [
+				1
+			]
+			},
+			{
+			"day": "5",
+			"hour": [
+				1
+			]
+			},
+			{
+			"day": "6",
+			"hour": [
+				1
+			]
+			}
+		]
 		summary_query_split = obj_data_edit["summary_query"].split(' ')
 		if summary_query_split and summary_query_split[-1] == "p":
 			summary_query_split.pop()
@@ -282,7 +369,7 @@ def save_edit_crawl():
 			{
 				"$set": {
 					"modeSchedule": obj_data_edit["modeSchedule"],
-					"timeSchedule": obj_data_edit["timeSchedule"],
+					"timeSchedule": timeSchedule,
 					"modePublic": obj_data_edit["modePublic"],
 					"modeRobotsParser": obj_data_edit["modeRobotsParser"],
 					"timeOutCrawl": obj_data_edit["timeOutCrawl"],
@@ -303,13 +390,13 @@ def save_edit_crawl():
 				}
 			}
 		)
-		if obj_data_edit["modeSchedule"] :
-			print("true")
-			print(f'Setup Schedule {obj_data_edit["titlePage"]} {obj_data_edit["industry"]}')
-			configure_scheduler(obj_data_edit["titlePage"],obj_data_edit["industry"])
-		else :
-			print(f'Remove Scheduler {obj_data_edit["titlePage"]} {obj_data_edit["industry"]}')
-			remove_scheduler(obj_data_edit["titlePage"],obj_data_edit["industry"])
+		# if obj_data_edit["modeSchedule"] :
+		# 	print("true")
+		# 	print(f'Setup Schedule {obj_data_edit["titlePage"]} {obj_data_edit["industry"]}')
+		# 	configure_scheduler(obj_data_edit["titlePage"],obj_data_edit["industry"])
+		# else :
+		# 	print(f'Remove Scheduler {obj_data_edit["titlePage"]} {obj_data_edit["industry"]}')
+		# 	remove_scheduler(obj_data_edit["titlePage"],obj_data_edit["industry"])
 		return "success edit config"
 
 	except Exception as err:
@@ -321,10 +408,54 @@ def save_edit_crawl_create():
 	try:
 		obj_data_edit = request.json["objDataEdit"]
 
-		for i in range(len(obj_data_edit["timeSchedule"])):
-			obj_data_edit["timeSchedule"][i]["hour"] = obj_data_edit["timeSchedule"][i]["hour"] or []
-			if obj_data_edit["timeSchedule"][i]["hour"]:
-				obj_data_edit["timeSchedule"][i]["hour"] = list(map(int, obj_data_edit["timeSchedule"][i]["hour"]))
+		# for i in range(len(obj_data_edit["timeSchedule"])):
+		# 	obj_data_edit["timeSchedule"][i]["hour"] = obj_data_edit["timeSchedule"][i]["hour"] or []
+		# 	if obj_data_edit["timeSchedule"][i]["hour"]:
+		# 		obj_data_edit["timeSchedule"][i]["hour"] = list(map(int, obj_data_edit["timeSchedule"][i]["hour"]))
+		timeSchedule= [
+				{
+			"day": "0",
+			"hour": [
+				1
+			]
+			},
+			{
+			"day": "1",
+			"hour": [
+				1
+			]
+			},
+			{
+			"day": "2",
+			"hour": [
+				1
+			]
+			},
+			{
+			"day": "3",
+			"hour": [
+				1
+			]
+			},
+			{
+			"day": "4",
+			"hour": [
+				1
+			]
+			},
+			{
+			"day": "5",
+			"hour": [
+				1
+			]
+			},
+			{
+			"day": "6",
+			"hour": [
+				1
+			]
+			}
+		]
 
 		summary_query_split = obj_data_edit["summary_query"].split(' ')
 		if summary_query_split and summary_query_split[-1] == "p":
@@ -343,7 +474,7 @@ def save_edit_crawl_create():
 			{
 				"$set": {
 					"modeSchedule": obj_data_edit["modeSchedule"],
-					"timeSchedule": obj_data_edit["timeSchedule"],
+					"timeSchedule": timeSchedule,
 					# "modeCookies": obj_data_edit["modeCookies"],
 					"modeRobotsParser": obj_data_edit["modeRobotsParser"],
 					"timeOutCrawl": int(obj_data_edit["timeOutCrawl"]),
@@ -368,14 +499,14 @@ def save_edit_crawl_create():
 				}
 			}
 		)
-		print('obj_data_edit["modeSchedule"]',obj_data_edit["modeSchedule"])
-		if obj_data_edit["modeSchedule"] :
-			print("true")
-			print('Setup Schedule {}'.format(obj_data_edit["titlePage"]))
-			configure_scheduler(obj_data_edit["titlePage"],obj_data_edit["industry"])
-		else :
-			print('Remove Scheduler {}'.format(obj_data_edit["titlePage"]))
-			remove_scheduler(obj_data_edit["titlePage"])
+		
+		# if obj_data_edit["modeSchedule"] :
+		# 	print("true")
+		# 	print('Setup Schedule {}'.format(obj_data_edit["titlePage"]))
+		# 	configure_scheduler(obj_data_edit["titlePage"],obj_data_edit["industry"])
+		# else :
+		# 	print('Remove Scheduler {}'.format(obj_data_edit["titlePage"]))
+		# 	remove_scheduler(obj_data_edit["titlePage"])
 
 		
 		return "success edit create config"
