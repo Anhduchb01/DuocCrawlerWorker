@@ -15,13 +15,13 @@ class CustomSpider(scrapy.Spider):
 		print('config',config)
 		self.last_date = config["last_date"]
 		
-		self.title_query = config['title_query']
-		self.timeCreatePostOrigin_query = config['timeCreatePostOrigin_query']
-		self.author_query = config['author_query']
-		self.content_query =config['content_query']
-		self.summary_query = config['summary_query']
-		self.content_html_query = config['content_html_query']
-		self.summary_html_query = config['summary_html_query']
+		self.title_query = self.format_selector(config['title_query'])
+		self.timeCreatePostOrigin_query = self.format_selector(config['timeCreatePostOrigin_query'])
+		self.author_query = self.format_selector(config['author_query'])
+		self.content_query =self.format_selector(config['content_query'])
+		self.summary_query = self.format_selector(config['summary_query'])
+		self.content_html_query = self.format_selector(config['content_html_query'])
+		self.summary_html_query = self.format_selector(config['summary_html_query'])
 
 		self.origin_domain = config['origin_domain']
 		self.start_urls = config['start_urls']
@@ -33,6 +33,9 @@ class CustomSpider(scrapy.Spider):
 		self.useSplash = config['useSplash']
 		self.saveToCollection = config['saveToCollection']
 		self.industry = config['industry']
+	def format_selector(self , selector):
+		selector = str(selector).replace(" "," ")
+		return selector
 	def formatStringContent(self, text):
 		if isinstance(text, list):
 			text = '\n'.join(text)
