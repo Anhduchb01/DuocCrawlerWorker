@@ -36,6 +36,8 @@ class CustomSpider(scrapy.Spider):
 		self.useSplash = config['useSplash']
 		self.saveToCollection = config['saveToCollection']
 		self.industry = config['industry']
+		self.check_error = False
+		self.message_error = ""
 	def format_selector(self , selector):
 		selector = str(selector).replace(" "," ")
 		return selector
@@ -175,42 +177,14 @@ class CustomSpider(scrapy.Spider):
 			# Catch SelectorSyntaxError
 			print('ERROR---------------------------')
 			error_message = repr(e)
-			mongo_uri = self.settings.get('MONGO_URI')
-			mongo_db = self.settings.get('MONGO_DB')
-			client = pymongo.MongoClient(mongo_uri)
-			db = client[mongo_db]
-			curren_crawler = db.crawlers.find_one({'addressPage': self.namePage,'industry':self.industry})
-			time_crawl_page = datetime.now().strftime("%Y/%m/%d")
-			db.crawlers.update_one({'addressPage': self.namePage,'industry':self.industry}, {'$set': {'statusPageCrawl': 'Error','dateLastCrawler':time_crawl_page,'sumPost':int(curren_crawler['sumPost'])+int(curren_crawler['increasePost'])}})
-			self.save_logger_crawler(self.namePage,self.industry,"Error",error_message)
-			print('Update status Error for crawler item',self.namePage)
-			client.close()
+			print(error_message)
+			if self.check_error :
+				self.check_error = True
+			else:
+				self.check_error = True
+			self.message_error += error_message + "\n"
 			raise CloseSpider(reason=error_message)
-	def save_logger_crawler(self,page,industry,action,message):
-		time_crawl_page = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-		string_message = ""
-
-		if action == "Create":
-			string_message = "Create Crawler"
-		elif action == "Success":
-			string_message = "Crawler Success"
-		elif action == "Error":
-			string_message = message.replace(r"['\"()]", '')
-
-		log_entry = {
-			'action': action,
-			'page': page,
-			'industry':industry,
-			'message': string_message,
-			'timelog': time_crawl_page
-		}
-		mongo_uri = self.settings.get('MONGO_URI')
-		mongo_db = self.settings.get('MONGO_DB')
-		client = pymongo.MongoClient(mongo_uri)
-		db = client[mongo_db]
-		db.logcrawlers.insert_one(log_entry)
-		client.close()
-
+	
 
 
 

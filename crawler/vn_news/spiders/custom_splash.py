@@ -6,6 +6,8 @@ import dateutil.parser
 from scrapy.linkextractors import LinkExtractor
 from scrapy_splash import SplashRequest
 from .convert_date import convert_to_custom_format
+from cssselect.parser import SelectorSyntaxError
+from scrapy.exceptions import CloseSpider
 class CustomSplashSpider(scrapy.Spider):
 	name = 'customSplash'
 	def __init__(self,config=None, *args, **kwargs):
@@ -31,6 +33,8 @@ class CustomSplashSpider(scrapy.Spider):
 		self.useSplash = config['useSplash']
 		self.saveToCollection = config['saveToCollection']
 		self.industry = config['industry']
+		self.check_error = False
+		self.message_error = ""
 	def formatStringContent(self, text):
 		if isinstance(text, list):
 			text = '\n'.join(text)
@@ -79,68 +83,80 @@ class CustomSplashSpider(scrapy.Spider):
                 callback=self.parse,
             )
 	def parse(self, response):
-		print('start')
-		print('Using Spash :' ,self.useSplash)
-		le = LinkExtractor()
-		list_links = le.extract_links(response)
-		news_links = [
-			link.url for link in list_links if self.should_follow_link(link.url)
-		]
-		print('news_links',news_links)
-		for link in news_links:
-			self.visited_links.add(link)
-			yield  SplashRequest(url= link, callback=self.parse, args={"wait": 10,"expand":1,"timeout":90})
-		title = response.css(self.title_query+' ::text').get()
-		title = self.formatTitle(title)
-		if self.timeCreatePostOrigin_query == '' or self.timeCreatePostOrigin_query ==None:
-			timeCreatePostOrigin = ''
-			timeCreatePostRaw = ''
-		else:
-			timeCreatePostRaw  = response.css(self.timeCreatePostOrigin_query+' ::text').get()
-		
-		try :
-			timeCreatePostOrigin  = convert_to_custom_format(timeCreatePostRaw)
-		except Exception as e: 
-			timeCreatePostOrigin = None
-			print('Do Not convert to datetime')
-			print(e)
-		# author = response.css(self.author_query+'::text').get()
-		# author = author.replace('Theo','')
-		# author = re.sub(r'\s{2,}', ' ', str(author))
-		if self.summary_query == '' or self.summary_query ==None:
-			summary = ''
-			summary_html =''
+		try:
+			print('start')
+			print('Using Spash :' ,self.useSplash)
+			le = LinkExtractor()
+			list_links = le.extract_links(response)
+			news_links = [
+				link.url for link in list_links if self.should_follow_link(link.url)
+			]
+			print('news_links',news_links)
+			for link in news_links:
+				self.visited_links.add(link)
+				yield  SplashRequest(url= link, callback=self.parse, args={"wait": 10,"expand":1,"timeout":90})
+			title = response.css(self.title_query+' ::text').get()
+			title = self.formatTitle(title)
+			if self.timeCreatePostOrigin_query == '' or self.timeCreatePostOrigin_query ==None:
+				timeCreatePostOrigin = ''
+				timeCreatePostRaw = ''
+			else:
+				timeCreatePostRaw  = response.css(self.timeCreatePostOrigin_query+' ::text').get()
 			
-		else:
-			summary = response.css(self.summary_query+' ::text').get()
-			summary = self.formatStringContent(summary)
-			summary_html = response.css(self.summary_html_query).get()
-		if self.content_query == '' or self.content_query ==None:
-			content = ''
-			content_html =''
-		else:
-			content = response.css(self.content_query+' ::text').getall()
-			content = self.formatStringContent(content)
-			content_html = response.css(self.content_html_query).get()
-		item = DuocItem(
-			title=title,
-			timeCreatePostOrigin=timeCreatePostOrigin,
-			timeCreatePostRaw = timeCreatePostRaw,
-			author = self.namePage,
-			summary=summary,
-			content=content,
-			summary_html=summary_html,
-			content_html = content_html,
-			urlPageCrawl= self.namePage,
-			url=response.url,
-			industry=self.industry,
-			status='0'
-		)
-		if title == '' or title ==None or content =='' or content == None :
-			yield None
-		else :
-			yield item
+			try :
+				timeCreatePostOrigin  = convert_to_custom_format(timeCreatePostRaw)
+			except Exception as e: 
+				timeCreatePostOrigin = None
+				print('Do Not convert to datetime')
+				print(e)
+			# author = response.css(self.author_query+'::text').get()
+			# author = author.replace('Theo','')
+			# author = re.sub(r'\s{2,}', ' ', str(author))
+			if self.summary_query == '' or self.summary_query ==None:
+				summary = ''
+				summary_html =''
+				
+			else:
+				summary = response.css(self.summary_query+' ::text').get()
+				summary = self.formatStringContent(summary)
+				summary_html = response.css(self.summary_html_query).get()
+			if self.content_query == '' or self.content_query ==None:
+				content = ''
+				content_html =''
+			else:
+				content = response.css(self.content_query+' ::text').getall()
+				content = self.formatStringContent(content)
+				content_html = response.css(self.content_html_query).get()
+			item = DuocItem(
+				title=title,
+				timeCreatePostOrigin=timeCreatePostOrigin,
+				timeCreatePostRaw = timeCreatePostRaw,
+				author = self.namePage,
+				summary=summary,
+				content=content,
+				summary_html=summary_html,
+				content_html = content_html,
+				urlPageCrawl= self.namePage,
+				url=response.url,
+				industry=self.industry,
+				status='0'
+			)
+			if title == '' or title ==None or content =='' or content == None :
+				yield None
+			else :
+				yield item
 
-
+		except SelectorSyntaxError as e:
+			# Catch SelectorSyntaxError
+			print('ERROR---------------------------')
+			error_message = repr(e)
+			print(error_message)
+			if self.check_error :
+				self.check_error = True
+			else:
+				self.check_error = True
+			self.message_error += error_message + "\n"
+			raise CloseSpider(reason=error_message)
+	
 	
 	
