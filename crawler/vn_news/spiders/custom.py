@@ -2,6 +2,7 @@ import scrapy
 from ..items import DuocItem
 from datetime import datetime
 import re
+import pymongo
 import dateutil.parser
 from scrapy.linkextractors import LinkExtractor
 from scrapy_splash import SplashRequest
@@ -100,6 +101,7 @@ class CustomSpider(scrapy.Spider):
 				yield scrapy.Request(url= link, callback=self.parse_news)
 	
 	def parse_news(self, response):
+		try:
 
 			le = LinkExtractor()
 			list_page_links = le.extract_links(response)
@@ -169,6 +171,22 @@ class CustomSpider(scrapy.Spider):
 				yield None
 			else :
 				yield item
+		except SelectorSyntaxError as e:
+			# Catch SelectorSyntaxError
+			print('ERROR---------------------------')
+			error_message = repr(e)
+			mongo_uri = self.settings.get('MONGO_URI')
+			mongo_db = self.settings.get('MONGO_DB')
+			client = pymongo.MongoClient(mongo_uri)
+			db = client[mongo_db]
+			curren_crawler = db.crawlers.find_one({'addressPage': self.namePage,'industry':self.industry})
+			time_crawl_page = datetime.now().strftime("%Y/%m/%d")
+			self.db.crawlers.update_one({'addressPage': self.namePage,'industry':self.industry}, {'$set': {'statusPageCrawl': 'Error','dateLastCrawler':time_crawl_page,'sumPost':int(curren_crawler['sumPost'])+int(curren_crawler['increasePost'])}})
+			self.save_logger_crawler(self.namePage,self.industry,"Error",error_message)
+			print('Update status Error for crawler item',self.namePage)
+			self.client.close()
+			raise CloseSpider(reason=error_message)
+
 
 
 

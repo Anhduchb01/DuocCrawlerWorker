@@ -98,7 +98,7 @@ class MongoPipeline(object):
 		spider.crawler.engine.close_spider(self, reason='error')
 		self.client.close()
 
-	def spider_error(self, failure, response, spider):
+	def handle_spider_error(self, failure, response, spider):
 		print('Error crawling! ',spider.namePage)
 		error = failure.getTraceback()
 		curren_crawler = self.db.crawlers.find_one({'addressPage': spider.namePage,'industry':spider.industry})
