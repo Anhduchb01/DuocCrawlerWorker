@@ -15,13 +15,13 @@ class CustomSplashSpider(scrapy.Spider):
 		self.items_crawled = 0
 		self.last_date = config["last_date"]
 		
-		self.title_query = config['title_query']
-		self.timeCreatePostOrigin_query = config['timeCreatePostOrigin_query']
-		self.author_query = config['author_query']
-		self.content_query =config['content_query']
-		self.summary_query = config['summary_query']
-		self.content_html_query = config['content_html_query']
-		self.summary_html_query = config['summary_html_query']
+		self.title_query = self.format_selector(config['title_query'])
+		self.timeCreatePostOrigin_query = self.format_selector(config['timeCreatePostOrigin_query'])
+		self.author_query = self.format_selector(config['author_query'])
+		self.content_query =self.format_selector(config['content_query'])
+		self.summary_query = self.format_selector(config['summary_query'])
+		self.content_html_query = self.format_selector(config['content_html_query'])
+		self.summary_html_query = self.format_selector(config['summary_html_query'])
 
 		self.origin_domain = config['origin_domain']
 		self.start_urls = config['start_urls']
@@ -35,6 +35,9 @@ class CustomSplashSpider(scrapy.Spider):
 		self.industry = config['industry']
 		self.check_error = False
 		self.message_error = ""
+	def format_selector(self , selector):
+		selector = str(selector).replace(">"," ")
+		return selector
 	def formatStringContent(self, text):
 		if isinstance(text, list):
 			text = '\n'.join(text)
@@ -155,7 +158,8 @@ class CustomSplashSpider(scrapy.Spider):
 				self.check_error = True
 			else:
 				self.check_error = True
-			self.message_error += error_message + "\n"
+			if error_message not in self.message_error:
+				self.message_error += error_message + "\n"
 			raise CloseSpider(reason=error_message)
 	
 	

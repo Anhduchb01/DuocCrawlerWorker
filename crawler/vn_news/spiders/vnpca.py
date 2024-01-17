@@ -113,5 +113,6 @@ class VnpcaSpider(scrapy.Spider):
 				self.check_error = True
 			else:
 				self.check_error = True
-			self.message_error += error_message + "\n"
+			if error_message not in self.message_error:
+				self.message_error += error_message + "\n"
 			raise CloseSpider(reason=error_message)
