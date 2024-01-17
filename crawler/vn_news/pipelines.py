@@ -71,6 +71,15 @@ class MongoPipeline(object):
 			print('not have title and content')
 		
 		return item
+	def spider_error(self, failure, response, spider):
+		print('Error crawling! ',spider.namePage)
+		error = failure.getTraceback()
+		curren_crawler = self.db.crawlers.find_one({'addressPage': spider.namePage,'industry':spider.industry})
+		time_crawl_page = datetime.now().strftime("%Y/%m/%d")
+		self.db.crawlers.update_one({'addressPage': spider.namePage,'industry':spider.industry}, {'$set': {'statusPageCrawl': 'Error','dateLastCrawler':time_crawl_page,'sumPost':int(curren_crawler['sumPost'])+int(curren_crawler['increasePost'])}})
+		self.save_logger_crawler(spider.namePage,spider.industry,"Error",error)
+		print('Update status Error for crawler ',spider.namePage)
+		self.client.close()
 
 	def close_spider(self, spider):
 		
