@@ -194,9 +194,6 @@ def create_crawler():
 		if check_crawler_info :
 			return "NamePage Exist"
 		# Create and save the crawler object
-		exit_industry = industries_collection.find_one({"name": obj_data_new["industry"]})
-		if not exit_industry:
-			return {"error": f"{obj_data_new['industry']} not exist"}
 		crawler = {
 			"addressPage": address_page,
 			"URL": obj_data_new["urlPage"],
