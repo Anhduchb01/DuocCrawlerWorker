@@ -327,9 +327,6 @@ def remove_crawler():
 	try:
 		name_page = request.json["namePage"]
 		industry = request.json["industry"]
-		exit_industry = industries_collection.find_one({"name": industry})
-		if not exit_industry:
-			return "industry not found"
 		config_default_crawlers_collection.delete_one({"titlePage": name_page,"industry":industry})
 		crawlers_collection.delete_one({"addressPage": name_page,"industry":industry})
 		config_crawlers_collection.delete_one({"namePage": name_page,"industry":industry})
