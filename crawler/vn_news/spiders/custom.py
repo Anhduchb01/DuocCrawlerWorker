@@ -2,13 +2,10 @@ import scrapy
 from ..items import DuocItem
 from datetime import datetime
 import re
-import pymongo
 import dateutil.parser
 from scrapy.linkextractors import LinkExtractor
 from scrapy_splash import SplashRequest
 from .convert_date import convert_to_custom_format
-from cssselect.parser import SelectorSyntaxError
-from scrapy.exceptions import CloseSpider
 class CustomSpider(scrapy.Spider):
 	name = 'custom'
 	def __init__(self,config=None, *args, **kwargs):
@@ -18,13 +15,13 @@ class CustomSpider(scrapy.Spider):
 		print('config',config)
 		self.last_date = config["last_date"]
 		
-		self.title_query = self.format_selector(config['title_query'])
-		self.timeCreatePostOrigin_query = self.format_selector(config['timeCreatePostOrigin_query'])
-		self.author_query = self.format_selector(config['author_query'])
-		self.content_query =self.format_selector(config['content_query'])
-		self.summary_query = self.format_selector(config['summary_query'])
-		self.content_html_query = self.format_selector(config['content_html_query'])
-		self.summary_html_query = self.format_selector(config['summary_html_query'])
+		self.title_query = config['title_query']
+		self.timeCreatePostOrigin_query = config['timeCreatePostOrigin_query']
+		self.author_query = config['author_query']
+		self.content_query =config['content_query']
+		self.summary_query = config['summary_query']
+		self.content_html_query = config['content_html_query']
+		self.summary_html_query = config['summary_html_query']
 
 		self.origin_domain = config['origin_domain']
 		self.start_urls = config['start_urls']
@@ -36,11 +33,6 @@ class CustomSpider(scrapy.Spider):
 		self.useSplash = config['useSplash']
 		self.saveToCollection = config['saveToCollection']
 		self.industry = config['industry']
-		self.check_error = False
-		self.message_error = ""
-	def format_selector(self , selector):
-		selector = str(selector).replace(">"," ")
-		return selector
 	def formatStringContent(self, text):
 		if isinstance(text, list):
 			text = '\n'.join(text)
@@ -103,89 +95,71 @@ class CustomSpider(scrapy.Spider):
 				yield scrapy.Request(url= link, callback=self.parse_news)
 	
 	def parse_news(self, response):
-		try:
+		le = LinkExtractor()
+		list_page_links = le.extract_links(response)
+		next_page_links = [
+			link.url for link in list_page_links if self.should_follow_link(link.url)
+		]
+		print('next_page_links',next_page_links)
+		for next_page_link in next_page_links:
+			if next_page_link not in self.visited_links:
+				if self.useSplash:
+					yield  SplashRequest(url= next_page_link, callback=self.parse_news, args={"wait": 15})
+				else:
+					yield scrapy.Request(url=next_page_link, callback=self.parse_news)
+		
+		# title = response.css('div.news-title h1::text').get()
+		title = response.css(self.title_query+' ::text').get()
+		title = self.formatTitle(title)
+		if self.timeCreatePostOrigin_query == '' or self.timeCreatePostOrigin_query ==None:
+			timeCreatePostOrigin = ''
+			timeCreatePostRaw = ''
+		else:
+			timeCreatePostRaw = ' '.join(response.css(self.timeCreatePostOrigin_query+' ::text').getall())
+			timeCreatePostRaw = str(timeCreatePostRaw).strip()
+			print('timeCreatePostRaw',str(timeCreatePostRaw))
 
-			le = LinkExtractor()
-			list_page_links = le.extract_links(response)
-			next_page_links = [
-				link.url for link in list_page_links if self.should_follow_link(link.url)
-			]
-			print('next_page_links',next_page_links)
-			for next_page_link in next_page_links:
-				if next_page_link not in self.visited_links:
-					if self.useSplash:
-						yield  SplashRequest(url= next_page_link, callback=self.parse_news, args={"wait": 15})
-					else:
-						yield scrapy.Request(url=next_page_link, callback=self.parse_news)
 			
-			# title = response.css('div.news-title h1::text').get()
-			title = response.css(self.title_query+' ::text').get()
-			title = self.formatTitle(title)
-			if self.timeCreatePostOrigin_query == '' or self.timeCreatePostOrigin_query ==None:
-				timeCreatePostOrigin = ''
-				timeCreatePostRaw = ''
-			else:
-				timeCreatePostRaw = ' '.join(response.css(self.timeCreatePostOrigin_query+' ::text').getall())
-				timeCreatePostRaw = str(timeCreatePostRaw).strip()
-				print('timeCreatePostRaw',str(timeCreatePostRaw))
+		try :
+			timeCreatePostOrigin  = convert_to_custom_format(timeCreatePostRaw)
+		except Exception as e: 
+			timeCreatePostOrigin = None
+			print('Do Not convert to datetime')
+			print(e)
+		# author = response.css(self.author_query+'::text').get()
+		# author = author.replace('Theo','')
+		# author = re.sub(r'\s{2,}', ' ', str(author))
+		if self.summary_query == '' or self.summary_query ==None:
+			summary = ''
+			summary_html =''
+			
+		else:
+			summary = response.css(self.summary_query+' ::text').get()
+			summary = self.formatStringContent(summary)
+			summary_html = response.css(self.summary_html_query).get()
+		if self.content_query == '' or self.content_query ==None:
+			content = ''
+			content_html =''
+		else:
+			content = response.css(self.content_query+' ::text').getall()
+			content = self.formatStringContent(content)
+			content_html = response.css(self.content_html_query).get()
+		item = DuocItem(
+			title=title,
+			timeCreatePostOrigin=timeCreatePostOrigin,
+			timeCreatePostRaw = timeCreatePostRaw,
+			author = self.namePage,
+			summary=summary,
+			content=content,
+			summary_html=summary_html,
+			content_html = content_html,
+			urlPageCrawl= self.namePage,
+			url=response.url,
+			industry=self.industry,
+			status='0'
 
-				
-			try :
-				timeCreatePostOrigin  = convert_to_custom_format(timeCreatePostRaw)
-			except Exception as e: 
-				timeCreatePostOrigin = None
-				print('Do Not convert to datetime')
-				print(e)
-			# author = response.css(self.author_query+'::text').get()
-			# author = author.replace('Theo','')
-			# author = re.sub(r'\s{2,}', ' ', str(author))
-			if self.summary_query == '' or self.summary_query ==None:
-				summary = ''
-				summary_html =''
-				
-			else:
-				summary = response.css(self.summary_query+' ::text').get()
-				summary = self.formatStringContent(summary)
-				summary_html = response.css(self.summary_html_query).get()
-			if self.content_query == '' or self.content_query ==None:
-				content = ''
-				content_html =''
-			else:
-				content = response.css(self.content_query+' ::text').getall()
-				content = self.formatStringContent(content)
-				content_html = response.css(self.content_html_query).get()
-			item = DuocItem(
-				title=title,
-				timeCreatePostOrigin=timeCreatePostOrigin,
-				timeCreatePostRaw = timeCreatePostRaw,
-				author = self.namePage,
-				summary=summary,
-				content=content,
-				summary_html=summary_html,
-				content_html = content_html,
-				urlPageCrawl= self.namePage,
-				url=response.url,
-				industry=self.industry,
-				status='0'
-
-			)
-			if title == '' or title ==None or content =='' or content == None :
-				yield None
-			else :
-				yield item
-		except SelectorSyntaxError as e:
-			# Catch SelectorSyntaxError
-			print('ERROR---------------------------')
-			error_message = repr(e)
-			print(error_message)
-			if self.check_error :
-				self.check_error = True
-			else:
-				self.check_error = True
-			if error_message not in self.message_error:
-				self.message_error += error_message + "\n"
-			raise CloseSpider(reason=error_message)
-	
-
-
-
+		)
+		if title == '' or title ==None or content =='' or content == None :
+			yield None
+		else :
+			yield item

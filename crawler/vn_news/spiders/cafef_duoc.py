@@ -2,8 +2,6 @@ import scrapy
 from ..items import DuocItem
 from datetime import datetime
 import re
-from cssselect.parser import SelectorSyntaxError
-from scrapy.exceptions import CloseSpider
 class CafefDuocSpider(scrapy.Spider):
 	name = 'cafef'
 	allowed_domains = ['cafef.vn']
@@ -29,8 +27,7 @@ class CafefDuocSpider(scrapy.Spider):
 		self.start_urls = config['start_urls']
 		print('start_url',self.start_urls)
 		self.industry = config['industry']
-		self.check_error = False
-		self.message_error = ""
+
 	def parse(self, response):
 		print('START CRAWL CAFEF')
 		# Extract news article URLs from the page
@@ -61,55 +58,42 @@ class CafefDuocSpider(scrapy.Spider):
 			print(e)
 		return text
 	def parse_article(self, response):
-		try:
-			# Extract information from the news article page
-			title = response.css(self.title_query+'::text').get()
-			title = self.formatTitle(title)
-			timeCreatePostOrigin = response.css(self.timeCreatePostOrigin_query+'::text').get()
-			if timeCreatePostOrigin is not None :
-				timeCreatePostOrigin = "".join(timeCreatePostOrigin.rstrip().lstrip())
-				try:
-					datetime_object = datetime.strptime(timeCreatePostOrigin, '%d-%m-%Y - %H:%M %p')
-					timeCreatePostOrigin = datetime_object.strftime('%Y/%m/%d')
-				except Exception as e: 
-					print('Do Not convert to datetime')
-					print(e)
-			
-			author = response.css(self.author_query+'::text').get()
-			
-			summary = response.css(self.summary_query+'::text').get()
-			summary = self.formatStringContent(summary)
-			summary_html = response.css(self.summary_html_query).get()
+		# Extract information from the news article page
+		title = response.css(self.title_query+'::text').get()
+		title = self.formatTitle(title)
+		timeCreatePostOrigin = response.css(self.timeCreatePostOrigin_query+'::text').get()
+		if timeCreatePostOrigin is not None :
+			timeCreatePostOrigin = "".join(timeCreatePostOrigin.rstrip().lstrip())
+			try:
+				datetime_object = datetime.strptime(timeCreatePostOrigin, '%d-%m-%Y - %H:%M %p')
+				timeCreatePostOrigin = datetime_object.strftime('%Y/%m/%d')
+			except Exception as e: 
+				print('Do Not convert to datetime')
+				print(e)
+		
+		author = response.css(self.author_query+'::text').get()
+		
+		summary = response.css(self.summary_query+'::text').get()
+		summary = self.formatStringContent(summary)
+		summary_html = response.css(self.summary_html_query).get()
 
-			content = response.css(self.content_query+' ::text').getall()
-			content = self.formatStringContent(content)
-			content_html = response.css(self.content_html_query).get()
-			item = DuocItem(
-				title=title,
-				timeCreatePostOrigin=timeCreatePostOrigin,
-				author = author,
-				summary=summary,
-				content=content,
-				summary_html= summary_html,
-				content_html = content_html,
-				urlPageCrawl= 'cafef',
-				url=response.url,
-				industry=self.industry,
-				status='0'
-			)
-			if title == '' or title ==None or content =='' or content == None :
-				yield None
-			else :
-				yield item
-		except Exception as e:
-			# Catch SelectorSyntaxError
-			print('ERROR---------------------------')
-			error_message = repr(e)
-			print(error_message)
-			if self.check_error :
-				self.check_error = True
-			else:
-				self.check_error = True
-			if error_message not in self.message_error:
-				self.message_error += error_message + "\n"
-			raise CloseSpider(reason=error_message)
+		content = response.css(self.content_query+' ::text').getall()
+		content = self.formatStringContent(content)
+		content_html = response.css(self.content_html_query).get()
+		item = DuocItem(
+			title=title,
+			timeCreatePostOrigin=timeCreatePostOrigin,
+			author = author,
+			summary=summary,
+			content=content,
+			summary_html= summary_html,
+			content_html = content_html,
+			urlPageCrawl= 'cafef',
+			url=response.url,
+			industry=self.industry,
+			status='0'
+		)
+		if title == '' or title ==None or content =='' or content == None :
+			yield None
+		else :
+			yield item

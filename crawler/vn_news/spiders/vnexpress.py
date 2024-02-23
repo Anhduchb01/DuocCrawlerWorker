@@ -2,8 +2,6 @@ import scrapy
 from ..items import DuocItem
 from datetime import datetime
 import re
-from cssselect.parser import SelectorSyntaxError
-from scrapy.exceptions import CloseSpider
 class VnexpressSpider(scrapy.Spider):
 	name = 'vnexpress'
 	allowed_domains = ['vnexpress.net']
@@ -30,8 +28,6 @@ class VnexpressSpider(scrapy.Spider):
 		self.current_page = 1
 		self.saveToCollection = config['saveToCollection']
 		self.industry = config['industry']
-		self.check_error = False
-		self.message_error = ""
 	def parse(self, response):
 		# Extract news article URLs from the page
 		article_links = response.css(self.article_url_query+'::attr(href)').getall()
@@ -65,64 +61,51 @@ class VnexpressSpider(scrapy.Spider):
 			print(e)
 		return text
 	def parse_article(self, response):
+		# Extract information from the news article page
+		title = response.css(self.title_query+'::text').get()
+		title = self.formatTitle(title)
+		
+		timeCreatePostOrigin = response.css(self.timeCreatePostOrigin_query+'::text').get()
+		
 		try:
-			# Extract information from the news article page
-			title = response.css(self.title_query+'::text').get()
-			title = self.formatTitle(title)
-			
-			timeCreatePostOrigin = response.css(self.timeCreatePostOrigin_query+'::text').get()
-			
-			try:
-				date_portion = timeCreatePostOrigin.split(',')[1].strip()
-				datetime_object = datetime.strptime(date_portion, '%d/%m/%Y')
-				timeCreatePostOrigin = datetime_object.strftime('%Y/%m/%d')
-			except Exception as e: 
-					print('Do Not convert to datetime')
-					timeCreatePostOrigin = timeCreatePostOrigin
-					print(e)
-			author = response.css(self.author_query+'::text').get()
+			date_portion = timeCreatePostOrigin.split(',')[1].strip()
+			datetime_object = datetime.strptime(date_portion, '%d/%m/%Y')
+			timeCreatePostOrigin = datetime_object.strftime('%Y/%m/%d')
+		except Exception as e: 
+				print('Do Not convert to datetime')
+				timeCreatePostOrigin = timeCreatePostOrigin
+				print(e)
+		author = response.css(self.author_query+'::text').get()
+		if author == None or author == "":
+			author = response.css('p.Normal[style="text-align:right;"] strong::text').get()
 			if author == None or author == "":
-				author = response.css('p.Normal[style="text-align:right;"] strong::text').get()
+				author = response.css('p.Normal[style="text-align:right;"] em::text').get()
 				if author == None or author == "":
-					author = response.css('p.Normal[style="text-align:right;"] em::text').get()
-					if author == None or author == "":
-						author = response.css('p.Normal[style="text-align:right;"]').get()
-			
-			# summary = response.css(self.summary_query+'::text').get()
-			# summary = self.formatString(summary)
-			# summary_html = response.css(self.summary_html_query).get()
+					author = response.css('p.Normal[style="text-align:right;"]').get()
+		
+		# summary = response.css(self.summary_query+'::text').get()
+		# summary = self.formatString(summary)
+		# summary_html = response.css(self.summary_html_query).get()
 
-			content = response.css(self.content_query+' ::text').getall()
-			content = self.formatStringContent(content)
-			content_html = response.css(self.content_html_query).get()
-			print(title)
-			# Create a CafefItem instance containing the information
-			item = DuocItem(
-				title=title,
-				timeCreatePostOrigin=timeCreatePostOrigin,
-				author = author,
-				summary='',
-				content=content,
-				summary_html= '',
-				content_html= content_html,
-				urlPageCrawl= 'vnexpress',
-				url=response.url,
-				industry=self.industry,
-				status='0'
-			)
-			if title == '' or title ==None or content =='' or content == None :
-				yield None
-			else :
-				yield item
-		except Exception as e:
-			# Catch SelectorSyntaxError
-			print('ERROR---------------------------')
-			error_message = repr(e)
-			print(error_message)
-			if self.check_error :
-				self.check_error = True
-			else:
-				self.check_error = True
-			if error_message not in self.message_error:
-				self.message_error += error_message + "\n"
-			raise CloseSpider(reason=error_message)
+		content = response.css(self.content_query+' ::text').getall()
+		content = self.formatStringContent(content)
+		content_html = response.css(self.content_html_query).get()
+		print(title)
+		# Create a CafefItem instance containing the information
+		item = DuocItem(
+			title=title,
+			timeCreatePostOrigin=timeCreatePostOrigin,
+			author = author,
+			summary='',
+			content=content,
+			summary_html= '',
+			content_html= content_html,
+			urlPageCrawl= 'vnexpress',
+			url=response.url,
+			industry=self.industry,
+			status='0'
+		)
+		if title == '' or title ==None or content =='' or content == None :
+			yield None
+		else :
+			yield item

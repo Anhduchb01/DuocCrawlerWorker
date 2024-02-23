@@ -9,11 +9,8 @@ from itemadapter import ItemAdapter
 import pymongo
 from datetime import datetime
 import dateutil.parser
-from scrapy.exceptions import CloseSpider
-from datetime import datetime
 
-from cssselect.parser import SelectorSyntaxError
-from scrapy.exceptions import CloseSpider
+from datetime import datetime
 class VnNewsPipeline:
 	def process_item(self, item, spider):
 		return item
@@ -74,62 +71,39 @@ class MongoPipeline(object):
 			print('not have title and content')
 		
 		return item
-	def process_exception(self, request, exception, spider):
-		print('Error crawling process_exception! ',spider.namePage)
-		if isinstance(exception, SelectorSyntaxError):
-			print('Error crawling process_exception SelectorSyntaxError! ',spider.namePage)
-			error_message = repr(exception)
-			curren_crawler = self.db.crawlers.find_one({'addressPage': spider.namePage,'industry':spider.industry})
-			time_crawl_page = datetime.now().strftime("%Y/%m/%d")
-			self.db.crawlers.update_one({'addressPage': spider.namePage,'industry':spider.industry}, {'$set': {'statusPageCrawl': 'Error','dateLastCrawler':time_crawl_page,'sumPost':int(curren_crawler['sumPost'])+int(curren_crawler['increasePost'])}})
-			self.save_logger_crawler(spider.namePage,spider.industry,"Error",error_message)
-			print('Update status Error for crawler item',spider.namePage)
-			spider.crawler.engine.close_spider(self, reason='error')
-			self.client.close()
-			raise CloseSpider(reason=error_message)
-	def item_error(self, failure, response, spider):
-		print('Error crawling item! ',spider.namePage)
+	def spider_error(self, failure, response, spider):
+		print('Error crawling! ',spider.namePage)
 		error = failure.getTraceback()
 		curren_crawler = self.db.crawlers.find_one({'addressPage': spider.namePage,'industry':spider.industry})
 		time_crawl_page = datetime.now().strftime("%Y/%m/%d")
 		self.db.crawlers.update_one({'addressPage': spider.namePage,'industry':spider.industry}, {'$set': {'statusPageCrawl': 'Error','dateLastCrawler':time_crawl_page,'sumPost':int(curren_crawler['sumPost'])+int(curren_crawler['increasePost'])}})
 		self.save_logger_crawler(spider.namePage,spider.industry,"Error",error)
-		print('Update status Error for crawler item',spider.namePage)
-		spider.crawler.engine.close_spider(self, reason='error')
+		print('Update status Error for crawler ',spider.namePage)
 		self.client.close()
 
-
 	def close_spider(self, spider):
-		if spider.check_error :
-			message_error = spider.message_error
-			print('Error crawling! ',spider.namePage)
-			curren_crawler = self.db.crawlers.find_one({'addressPage': spider.namePage,'industry':spider.industry})
-			time_crawl_page = datetime.now().strftime("%Y/%m/%d")
-			self.db.crawlers.update_one({'addressPage': spider.namePage,'industry':spider.industry}, {'$set': {'statusPageCrawl': 'Error','dateLastCrawler':time_crawl_page,'sumPost':int(curren_crawler['sumPost'])+int(curren_crawler['increasePost'])}})
-			self.save_logger_crawler(spider.namePage,spider.industry,"Error",message_error)
-			print('Update status Error for crawler ',spider.namePage)
-			self.client.close()
-		else:
-			print('Finished crawling! ',spider.namePage)
-			curren_crawler = self.db.crawlers.find_one({'addressPage': spider.namePage,'industry':spider.industry})
-			# if curren_crawler['wrong_date'] == True:
-			# 	print('Start Loop convert date correct day month')
-			# 	post_not_correct = self.db.posts.find({'urlPageCrawl': spider.namePage})
-			# 	for post in post_not_correct:
-			# 		old_date = post["timeCreatePostOrigin"]
-			# 		original_date = datetime.strptime(old_date, "%Y/%m/%d")
-			# 		new_date = original_date.strftime("%Y/%d/%m")
-			# 		if new_date is not None:
-			# 			# Update the document with the new date
-			# 			self.db.posts.update_one(
-			# 				{"_id": post["_id"]},
-			# 				{"$set": {"timeCreatePostOrigin": new_date,"correct_date_day_month":True}}
-			# 			)
-			time_crawl_page = datetime.now().strftime("%Y/%m/%d")
-			self.db.crawlers.update_one({'addressPage': spider.namePage,'industry':spider.industry}, {'$set': {'statusPageCrawl': 'Success','dateLastCrawler':time_crawl_page,'sumPost':int(curren_crawler['sumPost'])+int(curren_crawler['increasePost'])}})
-			self.save_logger_crawler(spider.namePage,spider.industry,"Success","")
-			print('Update status success for crawler ',spider.namePage)
-			self.client.close()
+		
+		
+		print('Finished crawling! ',spider.namePage)
+		curren_crawler = self.db.crawlers.find_one({'addressPage': spider.namePage,'industry':spider.industry})
+		# if curren_crawler['wrong_date'] == True:
+		# 	print('Start Loop convert date correct day month')
+		# 	post_not_correct = self.db.posts.find({'urlPageCrawl': spider.namePage})
+		# 	for post in post_not_correct:
+		# 		old_date = post["timeCreatePostOrigin"]
+		# 		original_date = datetime.strptime(old_date, "%Y/%m/%d")
+		# 		new_date = original_date.strftime("%Y/%d/%m")
+		# 		if new_date is not None:
+		# 			# Update the document with the new date
+		# 			self.db.posts.update_one(
+		# 				{"_id": post["_id"]},
+		# 				{"$set": {"timeCreatePostOrigin": new_date,"correct_date_day_month":True}}
+		# 			)
+		time_crawl_page = datetime.now().strftime("%Y/%m/%d")
+		self.db.crawlers.update_one({'addressPage': spider.namePage,'industry':spider.industry}, {'$set': {'statusPageCrawl': 'Success','dateLastCrawler':time_crawl_page,'sumPost':int(curren_crawler['sumPost'])+int(curren_crawler['increasePost'])}})
+		self.save_logger_crawler(spider.namePage,spider.industry,"Success","")
+		print('Update status success for crawler ',spider.namePage)
+		self.client.close()
 	def save_logger_crawler(self,page,industry,action,message):
 		time_crawl_page = datetime.now().strftime("%Y/%m/%d %H:%M:%S")
 		string_message = ""

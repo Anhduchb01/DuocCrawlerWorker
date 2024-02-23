@@ -26,7 +26,7 @@ import redis
 from rq import Queue, Connection
 from bson.json_util import dumps, loads
 from app import oidc
-
+from tqdm import tqdm
 load_dotenv()
 DB_URL = os.environ.get('DB_URL')
 print('DB_URL',DB_URL)
@@ -44,7 +44,20 @@ crawlers_collection = db["crawlers"]
 config_crawlers_collection = db["configcrawlers"]
 config_default_crawlers_collection = db["configdefaultcrawlers"]
 posts_collection = db["posts"]
+industries_collection = db["industries"]
 log_crawlers_collection = db["logcrawlers"]
+
+historyclassifications_collection = db["historyclassifications"]
+historygeneraterelations_collection = db["historygeneraterelations"]
+historygeneratetags_collection = db["historygeneratetags"]
+paragraphs_collection = db["paragraphs"]
+relationhistorys_collection = db["relationhistorys"]
+relationsubtagnames_collection = db["relationsubtagnames"]
+relationtagnames_collection = db["relationtagnames"]
+taghistorys_collection = db["taghistorys"]
+tagmaps_collection = db["tagmaps"]
+tags_collection = db["tags"]
+
 from celery import Celery
 import os
 
@@ -124,6 +137,52 @@ def insertPost(post):
 			del postObj['_id']
 	posts_collection.insert_many(post)
 	return {"data": "finish"}
+@crawler_blueprint.route("/get-industries", methods=["GET"])
+@oidc.accept_token()
+def get_industries():
+	try:
+		industries = industries_collection.find()
+		return dumps(industries)
+	except Exception as err:
+		print(err)
+		return {"error": str(err)}, 500
+@crawler_blueprint.route("/create-industry", methods=["POST"])
+@oidc.accept_token()
+def create_industry():
+	try:
+		name_industry = request.json["name_industry"]
+		exit_industry = industries_collection.find_one({"name": name_industry})
+		if exit_industry:
+			return {"error": f"{name_industry} already exist"}
+		else:
+			industries_collection.insert_one({"name": name_industry})
+			return {"data": f"finish create {name_industry}"}
+	except Exception as err:
+		print(err)
+		return {"error": str(err)}, 500	
+	
+@crawler_blueprint.route("/update-name-industry", methods=["POST"])
+@oidc.accept_token()
+def update_name_industry():
+	try:
+		old_name_industry = request.json["old_name_industry"]
+		new_name_industry = request.json["new_name_industry"]
+		exit_industry = industries_collection.find_one({"name": old_name_industry})
+		if not exit_industry:
+			return {"error": f"{old_name_industry} not exist"}
+		industries_collection.update_one({"name": old_name_industry},"$set",{"name": new_name_industry})
+		# historycollections = ["crawlers","configcrawlers","posts","configdefaultcrawlers","historyclassifications", "historygeneraterelations", "historygeneratetags", "paragraphs",
+        #               "relationhistorys", "relationsubtagnames", "relationtagnames", "taghistorys", "tagmaps", "tags"]
+
+		# for collection_name in tqdm(historycollections):
+		# 	collection = db[collection_name]
+		# 	collection.update_many({"industry": old_name_industry}, {"$set": {"industry": new_name_industry}})
+		# 	print(f"finish update {old_name_industry} to {new_name_industry} in {collection_name}")
+		return {"data": f"finish update {old_name_industry} to {new_name_industry}"}
+	except Exception as err:
+		print(err)
+		return {"error": str(err)}, 500	
+	
 @crawler_blueprint.route("/create-crawler", methods=["POST"])
 @oidc.accept_token()
 def create_crawler():
@@ -135,6 +194,9 @@ def create_crawler():
 		if check_crawler_info :
 			return "NamePage Exist"
 		# Create and save the crawler object
+		exit_industry = industries_collection.find_one({"name": obj_data_new["industry"]})
+		if not exit_industry:
+			return {"error": f"{obj_data_new['industry']} not exist"}
 		crawler = {
 			"addressPage": address_page,
 			"URL": obj_data_new["urlPage"],
@@ -144,7 +206,7 @@ def create_crawler():
 			"modePage": "On",
 			"increasePost": '0',
 			"type": "create",
-			"industry": obj_data_new["industry"]
+			"industry": obj_data_new["industry"],
 		}
 		crawler_obj = crawlers_collection.insert_one(crawler)
 		print(f'Create crawler Ok : {crawler_obj.inserted_id}')
@@ -268,6 +330,9 @@ def remove_crawler():
 	try:
 		name_page = request.json["namePage"]
 		industry = request.json["industry"]
+		exit_industry = industries_collection.find_one({"name": industry})
+		if not exit_industry:
+			return "industry not found"
 		config_default_crawlers_collection.delete_one({"titlePage": name_page,"industry":industry})
 		crawlers_collection.delete_one({"addressPage": name_page,"industry":industry})
 		config_crawlers_collection.delete_one({"namePage": name_page,"industry":industry})
@@ -363,7 +428,7 @@ def save_edit_crawl():
 			content_query_split.pop()
 
 		obj_data_edit["content_html_query"] = ' '.join(content_query_split)
-
+		
 		config_crawlers_collection.update_one(
 			{"titlePage": obj_data_edit["titlePage"],'industry':obj_data_edit["industry"]},
 			{
@@ -520,7 +585,9 @@ def crawl():
 	data = request.get_json()
 	namePage = data['namePage']
 	industry = data['industry']
+
 	crawler_info = db.crawlers.find_one({'addressPage': namePage,'industry':industry})
+	
 	if crawler_info['statusPageCrawl'] == 'Pending':
 		return  jsonify({"msg":"Crawler is running","namePage":namePage,"industry":industry}), 200
 	else:

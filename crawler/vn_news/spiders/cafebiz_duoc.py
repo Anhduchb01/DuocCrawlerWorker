@@ -2,8 +2,6 @@ import scrapy
 from ..items import DuocItem
 from datetime import datetime
 import re
-from cssselect.parser import SelectorSyntaxError
-from scrapy.exceptions import CloseSpider
 class CafebizDuocSpider(scrapy.Spider):
 	name = "cafebiz"
 	allowed_domains = ["cafebiz.vn"]
@@ -31,37 +29,22 @@ class CafebizDuocSpider(scrapy.Spider):
 		self.industry = config['industry']
 		self.current_page = 1
 		self.saveToCollection = config['saveToCollection']
-		self.check_error = False
-		self.message_error = ""
 	def parse(self, response):
-		try:
-			# Extract news article URLs from the page
-			article_links = response.css(self.article_url_query+'::attr(href)').getall()
-			# Follow each article URL and parse the article page
-			for link in article_links:
-				yield scrapy.Request(self.origin_domain + link, callback=self.parse_article)
-			# Next page
-			if len(article_links)>0:
-				self.current_page = int(response.url.split('/')[-1].split('.')[0])
-				print('current_page',self.current_page)
-				next_page = self.current_page + 1
-				next_page_link = response.url.replace(f"/{self.current_page}.htm", f"/{next_page}.htm")
-				yield scrapy.Request(next_page_link, callback=self.parse)
-			# else:
-			# 	print("No more article links to follow. Stopping the spider.")
-			# 	self.crawler.engine.close_spider(self, 'No more articles to scrape')
-		except Exception as e:
-			# Catch SelectorSyntaxError
-			print('ERROR---------------------------')
-			error_message = repr(e)
-			print(error_message)
-			if self.check_error :
-				self.check_error = True
-			else:
-				self.check_error = True
-			if error_message not in self.message_error:
-				self.message_error += error_message + "\n"
-			raise CloseSpider(reason=error_message)
+		# Extract news article URLs from the page
+		article_links = response.css(self.article_url_query+'::attr(href)').getall()
+		# Follow each article URL and parse the article page
+		for link in article_links:
+			yield scrapy.Request(self.origin_domain + link, callback=self.parse_article)
+		# Next page
+		if len(article_links)>0:
+			self.current_page = int(response.url.split('/')[-1].split('.')[0])
+			print('current_page',self.current_page)
+			next_page = self.current_page + 1
+			next_page_link = response.url.replace(f"/{self.current_page}.htm", f"/{next_page}.htm")
+			yield scrapy.Request(next_page_link, callback=self.parse)
+		# else:
+		# 	print("No more article links to follow. Stopping the spider.")
+		# 	self.crawler.engine.close_spider(self, 'No more articles to scrape')
 	def formatStringContent(self, text):
 		if isinstance(text, list):
 			text = '\n'.join(text)

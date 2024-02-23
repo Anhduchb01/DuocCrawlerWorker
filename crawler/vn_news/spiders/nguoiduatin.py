@@ -3,8 +3,6 @@ from ..items import DuocItem
 from datetime import datetime
 import re
 import requests
-from cssselect.parser import SelectorSyntaxError
-from scrapy.exceptions import CloseSpider
 class NguoiDuaTinSpider(scrapy.Spider):
 	name = 'nguoiduatin'
 	allowed_domains = ['nguoiduatin.vn']
@@ -30,8 +28,6 @@ class NguoiDuaTinSpider(scrapy.Spider):
 		self.industry = config['industry']
 		self.current_page = 1
 		self.saveToCollection = config['saveToCollection']
-		self.check_error = False
-		self.message_error = ""
 	def parse(self, response):
 		data = response.json().get('html', '')
 		if data:
@@ -62,55 +58,42 @@ class NguoiDuaTinSpider(scrapy.Spider):
 			print(e)
 		return text
 	def parse_article(self, response):
+		# Extract information from the news article page
+		title = response.css(self.title_query+'::text').get()
+		title = self.formatTitle(title)
+		timeCreatePostOrigin = response.css(self.timeCreatePostOrigin_query+'::text').get()
 		try:
-			# Extract information from the news article page
-			title = response.css(self.title_query+'::text').get()
-			title = self.formatTitle(title)
-			timeCreatePostOrigin = response.css(self.timeCreatePostOrigin_query+'::text').get()
-			try:
-				date_portion = timeCreatePostOrigin.split(',')[1].split('|')[0].strip()
-				datetime_object = datetime.strptime(date_portion, '%d/%m/%Y')
-				timeCreatePostOrigin = datetime_object.strftime('%Y/%m/%d')
-			except Exception as e: 
-				print('Do Not convert to datetime')
-				print(e)
-			author = response.css(self.author_query+'::text').get()
-			author = self.formatTitle(author)
+			date_portion = timeCreatePostOrigin.split(',')[1].split('|')[0].strip()
+			datetime_object = datetime.strptime(date_portion, '%d/%m/%Y')
+			timeCreatePostOrigin = datetime_object.strftime('%Y/%m/%d')
+		except Exception as e: 
+			print('Do Not convert to datetime')
+			print(e)
+		author = response.css(self.author_query+'::text').get()
+		author = self.formatTitle(author)
 
-			summary = response.css(self.summary_query+'::text').get()
-			summary = self.formatStringContent(summary)
-			summary_html =  response.css(self.summary_html_query).get()
+		summary = response.css(self.summary_query+'::text').get()
+		summary = self.formatStringContent(summary)
+		summary_html =  response.css(self.summary_html_query).get()
 
-			content = response.css(self.content_query+' ::text').getall()
-			content = self.formatStringContent(content)
-			content_html = response.css(self.content_html_query).get()
+		content = response.css(self.content_query+' ::text').getall()
+		content = self.formatStringContent(content)
+		content_html = response.css(self.content_html_query).get()
 
-			item = DuocItem(
-				title=title,
-				timeCreatePostOrigin=timeCreatePostOrigin,
-				author = author,
-				summary=summary,
-				content=content,
-				summary_html = summary_html,
-				content_html = content_html,
-				urlPageCrawl= 'nguoiduatin',
-				url=response.url,
-				industry=self.industry,
-				status='0'
-			)
-			if title == '' or title ==None or content =='' or content == None :
-				yield None
-			else :
-				yield item
-		except Exception as e:
-			# Catch SelectorSyntaxError
-			print('ERROR---------------------------')
-			error_message = repr(e)
-			print(error_message)
-			if self.check_error :
-				self.check_error = True
-			else:
-				self.check_error = True
-			if error_message not in self.message_error:
-				self.message_error += error_message + "\n"
-			raise CloseSpider(reason=error_message)
+		item = DuocItem(
+			title=title,
+			timeCreatePostOrigin=timeCreatePostOrigin,
+			author = author,
+			summary=summary,
+			content=content,
+			summary_html = summary_html,
+			content_html = content_html,
+			urlPageCrawl= 'nguoiduatin',
+			url=response.url,
+			industry=self.industry,
+			status='0'
+		)
+		if title == '' or title ==None or content =='' or content == None :
+			yield None
+		else :
+			yield item
