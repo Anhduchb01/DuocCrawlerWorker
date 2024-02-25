@@ -111,7 +111,6 @@ class CustomSpider(scrapy.Spider):
 		else:
 			timeCreatePostRaw = ' '.join(response.css(self.timeCreatePostOrigin_query+' ::text').getall())
 			timeCreatePostRaw = str(timeCreatePostRaw).strip()
-			print('timeCreatePostRaw',str(timeCreatePostRaw))
 		try :
 			timeCreatePostOrigin  = convert_to_custom_format(timeCreatePostRaw)
 		except Exception as e: 

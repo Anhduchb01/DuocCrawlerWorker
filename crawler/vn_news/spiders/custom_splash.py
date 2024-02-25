@@ -70,7 +70,6 @@ class CustomSplashSpider(scrapy.Spider):
 	
 	def start_requests(self):
 		for url in self.start_urls:
-			print('start request',url)
 			yield SplashRequest(
                 url,
                 endpoint="render.html",
@@ -79,13 +78,11 @@ class CustomSplashSpider(scrapy.Spider):
             )
 	def parse(self, response):
 		print('start')
-		print('Using Spash :' ,self.useSplash)
 		le = LinkExtractor()
 		list_links = le.extract_links(response)
 		news_links = [
 			link.url for link in list_links if self.should_follow_link(link.url)
 		]
-		print('news_links',news_links)
 		for link in news_links:
 			self.visited_links.add(link)
 			yield  SplashRequest(url= link, callback=self.parse, args={"wait": 10,"expand":1,"timeout":90})
