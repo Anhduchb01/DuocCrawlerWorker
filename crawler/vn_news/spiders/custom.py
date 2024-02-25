@@ -41,9 +41,7 @@ class CustomSpider(scrapy.Spider):
 		try :
 			text = re.sub(r'\s{2,}', ' ', str(text))
 		except Exception as e:
-			print('formatTitle')
-			print(e)
-
+			pass
 		return text
 	def check_correct_rules(self, link):
 		if len(self.correct_rules) > 0:
@@ -79,14 +77,11 @@ class CustomSpider(scrapy.Spider):
 		else:
 			return False
 	def parse(self, response):
-		print('start')
-		print('Using Spash :' ,self.useSplash)
 		le = LinkExtractor()
 		list_links = le.extract_links(response)
 		news_links = [
 			link.url for link in list_links if self.should_follow_link(link.url)
 		]
-		print('news_links',news_links)
 		for link in news_links:
 			self.visited_links.add(link)
 			if self.useSplash:
@@ -100,7 +95,6 @@ class CustomSpider(scrapy.Spider):
 		next_page_links = [
 			link.url for link in list_page_links if self.should_follow_link(link.url)
 		]
-		print('next_page_links',next_page_links)
 		for next_page_link in next_page_links:
 			if next_page_link not in self.visited_links:
 				if self.useSplash:
@@ -118,14 +112,10 @@ class CustomSpider(scrapy.Spider):
 			timeCreatePostRaw = ' '.join(response.css(self.timeCreatePostOrigin_query+' ::text').getall())
 			timeCreatePostRaw = str(timeCreatePostRaw).strip()
 			print('timeCreatePostRaw',str(timeCreatePostRaw))
-
-			
 		try :
 			timeCreatePostOrigin  = convert_to_custom_format(timeCreatePostRaw)
 		except Exception as e: 
 			timeCreatePostOrigin = None
-			print('Do Not convert to datetime')
-			print(e)
 		# author = response.css(self.author_query+'::text').get()
 		# author = author.replace('Theo','')
 		# author = re.sub(r'\s{2,}', ' ', str(author))

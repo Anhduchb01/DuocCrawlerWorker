@@ -54,7 +54,6 @@ class MongoPipeline(object):
 					original_date = datetime.strptime(timeCreatePostOrigin, "%Y/%m/%d")
 					new_date = original_date.strftime("%Y/%d/%m")
 					dict_item['timeCreatePostOrigin'] = new_date
-					print('url wrong date',url)
 				if not check_exits and not check_exits1:
 					print('Add new item to MongoDB',title)
 					self.db[saveToCollection].insert_one(dict_item)	

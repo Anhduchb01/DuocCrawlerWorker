@@ -39,8 +39,7 @@ class CustomSplashSpider(scrapy.Spider):
 		try :
 			text = re.sub(r'\s{2,}', ' ', text)
 		except Exception as e:
-			print('formatTitle')
-			print(e)
+			pass
 		return text
 	def check_correct_rules(self, link):
 		if len(self.correct_rules) > 0:
@@ -102,8 +101,6 @@ class CustomSplashSpider(scrapy.Spider):
 			timeCreatePostOrigin  = convert_to_custom_format(timeCreatePostRaw)
 		except Exception as e: 
 			timeCreatePostOrigin = None
-			print('Do Not convert to datetime')
-			print(e)
 		# author = response.css(self.author_query+'::text').get()
 		# author = author.replace('Theo','')
 		# author = re.sub(r'\s{2,}', ' ', str(author))
