@@ -190,7 +190,7 @@ def create_crawler():
 		obj_data_new = request.json["objDataNew"]
 		print(obj_data_new)
 		address_page = str(obj_data_new["titlePage"]).lower()
-		check_crawler_info = db.crawlers.find_one({'addressPage': address_page})
+		check_crawler_info = db.crawlers.find_one({'addressPage': address_page,"industry":obj_data_new["industry"]})
 		if check_crawler_info :
 			return "NamePage Exist"
 		# Create and save the crawler object

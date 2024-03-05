@@ -13,13 +13,13 @@ class CustomSplashSpider(scrapy.Spider):
 		self.items_crawled = 0
 		self.last_date = config["last_date"]
 		
-		self.title_query = config['title_query']
-		self.timeCreatePostOrigin_query = config['timeCreatePostOrigin_query']
-		self.author_query = config['author_query']
-		self.content_query =config['content_query']
-		self.summary_query = config['summary_query']
-		self.content_html_query = config['content_html_query']
-		self.summary_html_query = config['summary_html_query']
+		self.title_query = self.formatQuery(config['title_query'])
+		self.timeCreatePostOrigin_query = self.formatQuery(config['timeCreatePostOrigin_query'])
+		self.author_query = self.formatQuery(config['author_query'])
+		self.content_query = self.formatQuery(config['content_query'])
+		self.summary_query = self.formatQuery(config['summary_query'])
+		self.content_html_query = self.formatQuery(config['content_html_query'])
+		self.summary_html_query = self.formatQuery(config['summary_html_query'])
 
 		self.origin_domain = config['origin_domain']
 		self.start_urls = config['start_urls']
@@ -31,6 +31,12 @@ class CustomSplashSpider(scrapy.Spider):
 		self.useSplash = config['useSplash']
 		self.saveToCollection = config['saveToCollection']
 		self.industry = config['industry']
+	
+	def formatQuery(self, query):
+		query = str(query).strip()
+		query = query.replace(">"," ")
+		query = ' '.join(query.split())
+		return query
 	def formatStringContent(self, text):
 		if isinstance(text, list):
 			text = '\n'.join(text)
@@ -39,7 +45,8 @@ class CustomSplashSpider(scrapy.Spider):
 		try :
 			text = re.sub(r'\s{2,}', ' ', text)
 		except Exception as e:
-			pass
+			print('formatTitle')
+			print(e)
 		return text
 	def check_correct_rules(self, link):
 		if len(self.correct_rules) > 0:
@@ -70,6 +77,7 @@ class CustomSplashSpider(scrapy.Spider):
 	
 	def start_requests(self):
 		for url in self.start_urls:
+			print('start request',url)
 			yield SplashRequest(
                 url,
                 endpoint="render.html",
@@ -78,11 +86,13 @@ class CustomSplashSpider(scrapy.Spider):
             )
 	def parse(self, response):
 		print('start')
+		print('Using Spash :' ,self.useSplash)
 		le = LinkExtractor()
 		list_links = le.extract_links(response)
 		news_links = [
 			link.url for link in list_links if self.should_follow_link(link.url)
 		]
+		print('news_links',news_links)
 		for link in news_links:
 			self.visited_links.add(link)
 			yield  SplashRequest(url= link, callback=self.parse, args={"wait": 10,"expand":1,"timeout":90})
@@ -98,6 +108,8 @@ class CustomSplashSpider(scrapy.Spider):
 			timeCreatePostOrigin  = convert_to_custom_format(timeCreatePostRaw)
 		except Exception as e: 
 			timeCreatePostOrigin = None
+			print('Do Not convert to datetime')
+			print(e)
 		# author = response.css(self.author_query+'::text').get()
 		# author = author.replace('Theo','')
 		# author = re.sub(r'\s{2,}', ' ', str(author))
