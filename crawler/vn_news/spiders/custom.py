@@ -86,7 +86,11 @@ class CustomSpider(scrapy.Spider):
 		else:
 			return False
 	def get_inner_text(element, delimiter="\n"):
-		return delimiter.join(el.strip() for el in element.css('*::text').getall() if el.strip())
+		list_result = [str(el).strip() for el in element.css('*::text').getall() if len(str(el).strip())>0]
+		print(list_result)
+		result = delimiter.join(list_result)
+		print(result)
+		return result
 	
 	def parse(self, response):
 		print('start')
