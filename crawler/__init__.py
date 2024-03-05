@@ -599,6 +599,21 @@ def get_status(task_id):
 		"task_result": task_result.result
 	}
 	return jsonify(result), 200
+@crawler_blueprint.route("/stop-task/<task_id>", methods=["GET"])
+@oidc.accept_token()
+def stop_task(task_id):
+	try:
+		celery.control.revoke(task_id, terminate=True)
+		result = {
+			"task_id": task_id,
+			"task_status": "stopped",
+		}
+		if result:
+			return jsonify({ "task_id": task_id,"task_status": "stopped",}), 200
+		else:
+			return jsonify({"task_id": task_id,'status': 'Task not found or already completed'})
+	except Exception as e:
+		return jsonify({"msg": e})
 @crochet.wait_for(600000.0)
 def run_spider_crawl(spider,config_crawl,addressPage):
 	print('config_crawl_crophet',config_crawl)
