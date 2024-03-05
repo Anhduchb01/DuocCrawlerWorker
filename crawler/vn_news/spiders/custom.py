@@ -85,6 +85,9 @@ class CustomSpider(scrapy.Spider):
 			return True
 		else:
 			return False
+	def get_inner_text(element, delimiter="\n"):
+		return delimiter.join(el.strip() for el in element.css('*::text').getall() if el.strip())
+	
 	def parse(self, response):
 		print('start')
 		print('Using Spash :' ,self.useSplash)
@@ -113,44 +116,43 @@ class CustomSpider(scrapy.Spider):
 				else:
 					yield scrapy.Request(url=next_page_link, callback=self.parse_news)
 		
-		# title = response.css('div.news-title h1::text').get()
-		title = response.css(self.title_query+' ::text').get()
+		title = self.get_inner_text(response.css(self.title_query))
 		title = self.formatTitle(title)
 		if self.timeCreatePostOrigin_query == '' or self.timeCreatePostOrigin_query ==None:
 			timeCreatePostOrigin = ''
 			timeCreatePostRaw = ''
 		else:
-			timeCreatePostRaw = ' '.join(response.css(self.timeCreatePostOrigin_query+' ::text').getall())
-			timeCreatePostRaw = str(timeCreatePostRaw).strip()		
+			timeCreatePostRaw = self.get_inner_text(response.css(self.timeCreatePostOrigin_query))
 		try :
 			timeCreatePostOrigin  = convert_to_custom_format(timeCreatePostRaw)
 		except Exception as e: 
 			timeCreatePostOrigin = None
 			print('Do Not convert to datetime')
 			print(e)
-		# author = response.css(self.author_query+'::text').get()
-		# author = author.replace('Theo','')
-		# author = re.sub(r'\s{2,}', ' ', str(author))
+
+		if self.author_query == '' or self.author_query ==None:
+			author = self.namePage
+		else:
+			author = self.get_inner_text(response.css(self.author_query))
+
 		if self.summary_query == '' or self.summary_query ==None:
 			summary = ''
 			summary_html =''
 			
 		else:
-			summary = response.css(self.summary_query+' ::text').get()
-			summary = self.formatStringContent(summary)
+			summary = self.get_inner_text(response.css(self.summary_query))
 			summary_html = response.css(self.summary_html_query).get()
 		if self.content_query == '' or self.content_query ==None:
 			content = ''
 			content_html =''
 		else:
-			content = response.css(self.content_query+' ::text').getall()
-			content = self.formatStringContent(content)
+			content = self.get_inner_text(response.css(self.content_query))
 			content_html = response.css(self.content_html_query).get()
 		item = DuocItem(
 			title=title,
 			timeCreatePostOrigin=timeCreatePostOrigin,
 			timeCreatePostRaw = timeCreatePostRaw,
-			author = self.namePage,
+			author = author,
 			summary=summary,
 			content=content,
 			summary_html=summary_html,
