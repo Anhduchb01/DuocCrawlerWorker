@@ -89,7 +89,7 @@ class CustomSpider(scrapy.Spider):
 	# 	list_result = [str(el).strip() for el in element.css('*::text').getall() if len(str(el).strip())>0]
 	# 	result = delimiter.join(list_result)
 	# 	return result
-	def get_inner_text(elements):
+	def get_inner_text(self,elements):
 		delimiter="\n"
 		results = []
 		# Iterate over each element in the input
@@ -98,7 +98,8 @@ class CustomSpider(scrapy.Spider):
 			stripped_text_content = [el.strip() for el in text_content_list if len(str(el).strip())>0]
 			joined_text = delimiter.join(stripped_text_content)
 			results.append(joined_text)
-		return results
+		final_result = delimiter.join([text.strip() for text in results if len(str(text).strip())>0])
+		return final_result
 	
 	def parse(self, response):
 		print('start')
