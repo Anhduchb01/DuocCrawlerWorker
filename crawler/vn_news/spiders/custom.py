@@ -85,21 +85,13 @@ class CustomSpider(scrapy.Spider):
 			return True
 		else:
 			return False
-	# def get_inner_text(element, delimiter="\n"):
-	# 	list_result = [str(el).strip() for el in element.css('*::text').getall() if len(str(el).strip())>0]
-	# 	result = delimiter.join(list_result)
-	# 	return result
 	def get_inner_text(self,elements):
 		delimiter="\n"
-		results = []
-		# Iterate over each element in the input
-		for element in elements:
-			text_content_list = element.css('*::text').getall()
-			stripped_text_content = [el.strip() for el in text_content_list if len(str(el).strip())>0]
-			joined_text = delimiter.join(stripped_text_content)
-			results.append(joined_text)
-		final_result = delimiter.join([text.strip() for text in results if len(str(text).strip())>0])
-		return final_result
+		text_content_list = elements.css('*::text').getall()
+		# print("text_content_list",text_content_list)
+		stripped_text_content = [el.strip() for el in text_content_list if len(str(el).strip())>0]
+		joined_text = delimiter.join(stripped_text_content)
+		return joined_text
 	
 	def parse(self, response):
 		print('start')
@@ -129,13 +121,13 @@ class CustomSpider(scrapy.Spider):
 				else:
 					yield scrapy.Request(url=next_page_link, callback=self.parse_news)
 		
-		title = self.get_inner_text(response.css(self.title_query).getall())
+		title = self.get_inner_text(response.css(self.title_query))
 		title = self.formatTitle(title)
 		if self.timeCreatePostOrigin_query == '' or self.timeCreatePostOrigin_query ==None:
 			timeCreatePostOrigin = ''
 			timeCreatePostRaw = ''
 		else:
-			timeCreatePostRaw = self.get_inner_text(response.css(self.timeCreatePostOrigin_query).getall())
+			timeCreatePostRaw = self.get_inner_text(response.css(self.timeCreatePostOrigin_query))
 		try :
 			timeCreatePostOrigin  = convert_to_custom_format(timeCreatePostRaw)
 		except Exception as e: 
@@ -146,20 +138,20 @@ class CustomSpider(scrapy.Spider):
 		if self.author_query == '' or self.author_query ==None:
 			author = self.namePage
 		else:
-			author = self.get_inner_text(response.css(self.author_query).getall())
+			author = self.get_inner_text(response.css(self.author_query))
 
 		if self.summary_query == '' or self.summary_query ==None:
 			summary = ''
 			summary_html =''
 			
 		else:
-			summary = self.get_inner_text(response.css(self.summary_query).getall())
+			summary = self.get_inner_text(response.css(self.summary_query))
 			summary_html = response.css(self.summary_html_query).get()
 		if self.content_query == '' or self.content_query ==None:
 			content = ''
 			content_html =''
 		else:
-			content = self.get_inner_text(response.css(self.content_query).getall())
+			content = self.get_inner_text(response.css(self.content_query))
 			content_html = response.css(self.content_html_query).get()
 		item = DuocItem(
 			title=title,

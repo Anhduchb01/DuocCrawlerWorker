@@ -75,9 +75,13 @@ class CustomSplashSpider(scrapy.Spider):
 		else:
 			return False
 
-	def get_inner_text(element, delimiter="\n"):
-		return delimiter.join(el.strip() for el in element.css('*::text').getall() if el.strip())
-	
+	def get_inner_text(self,elements):
+		delimiter="\n"
+		text_content_list = elements.css('*::text').getall()
+		# print("text_content_list",text_content_list)
+		stripped_text_content = [el.strip() for el in text_content_list if len(str(el).strip())>0]
+		joined_text = delimiter.join(stripped_text_content)
+		return joined_text
 	
 	def start_requests(self):
 		for url in self.start_urls:
