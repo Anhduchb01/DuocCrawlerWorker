@@ -49,7 +49,7 @@ class MongoPipeline(object):
 				current_datetime = datetime.now()
 				current_datetime = current_datetime.strftime("%Y/%m/%d")
 				dict_item = dict(item)
-				if timeCreatePostOrigin != "" or timeCreatePostOrigin != None:
+				if timeCreatePostOrigin is not None and timeCreatePostOrigin != "":
 					if timeCreatePostOrigin > current_datetime:
 						self.db.crawlers.update_one({'addressPage': spider.namePage,'industry':industry}, {'$set': {'wrong_date': True}})
 						original_date = datetime.strptime(timeCreatePostOrigin, "%Y/%m/%d")
