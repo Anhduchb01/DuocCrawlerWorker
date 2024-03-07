@@ -49,12 +49,13 @@ class MongoPipeline(object):
 				current_datetime = datetime.now()
 				current_datetime = current_datetime.strftime("%Y/%m/%d")
 				dict_item = dict(item)
-				if timeCreatePostOrigin > current_datetime:
-					self.db.crawlers.update_one({'addressPage': spider.namePage,'industry':industry}, {'$set': {'wrong_date': True}})
-					original_date = datetime.strptime(timeCreatePostOrigin, "%Y/%m/%d")
-					new_date = original_date.strftime("%Y/%d/%m")
-					dict_item['timeCreatePostOrigin'] = new_date
-					print('url wrong date',url)
+				if timeCreatePostOrigin != "" or timeCreatePostOrigin != None:
+					if timeCreatePostOrigin > current_datetime:
+						self.db.crawlers.update_one({'addressPage': spider.namePage,'industry':industry}, {'$set': {'wrong_date': True}})
+						original_date = datetime.strptime(timeCreatePostOrigin, "%Y/%m/%d")
+						new_date = original_date.strftime("%Y/%d/%m")
+						dict_item['timeCreatePostOrigin'] = new_date
+						print('url wrong date',original_date,url)
 				if not check_exits and not check_exits1:
 					print('Add new item to MongoDB',title)
 					self.db[saveToCollection].insert_one(dict_item)	
@@ -67,8 +68,8 @@ class MongoPipeline(object):
 			else :
 				print('len of split title and content < 3',title)
 				print('URL',url)
-		except:
-			print('not have title and content')
+		except Exception as e:
+			print(f'Error in process_item: {str(e)}')
 		
 		return item
 	def spider_error(self, failure, response, spider):

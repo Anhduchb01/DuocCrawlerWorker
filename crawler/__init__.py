@@ -15,6 +15,7 @@ from crawler.vn_news.spiders.custom_splash import CustomSplashSpider
 from crawler.vn_news.pipelines import MongoPipeline
 import json
 from celery.result import AsyncResult
+from celery.contrib.abortable import AbortableTask
 import threading
 from pymongo import MongoClient
 from scrapy import signals
@@ -603,7 +604,8 @@ def get_status(task_id):
 @oidc.accept_token()
 def stop_task(task_id):
 	try:
-		celery.control.revoke(task_id, terminate=True)
+		print("task_id",task_id)
+		celery.control.revoke(str(task_id), terminate=True )
 		result = {
 			"task_id": task_id,
 			"task_status": "stopped",
@@ -679,7 +681,7 @@ def run_spider_crawl(spider,config_crawl,addressPage):
 	
 	return eventual 
 
-@celery.task(name='crawl_new')
+@celery.task(name='crawl_new',bind=True)
 def crawl_new(namePage,industry):
 	crawler_info = db.crawlers.find_one({'addressPage': namePage,'industry':industry})
 	crawler_config = db.configcrawlers.find_one({'namePage': namePage,'industry':industry})
