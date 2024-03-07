@@ -681,7 +681,7 @@ def run_spider_crawl(spider,config_crawl,addressPage):
 	
 	return eventual 
 
-@celery.task(name='crawl_new',bind=True)
+@celery.task(name='crawl_new')
 def crawl_new(namePage,industry):
 	crawler_info = db.crawlers.find_one({'addressPage': namePage,'industry':industry})
 	crawler_config = db.configcrawlers.find_one({'namePage': namePage,'industry':industry})
